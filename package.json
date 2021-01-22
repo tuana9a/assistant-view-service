@@ -1,0 +1,25 @@
+{
+  "name": "assistant-view-service",
+  "version": "1.0.0",
+  "description": "View Layer for HUST Assistant",
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gemdino/assistant-view-service.git"
+  },
+  "author": "Nguyen Minh Tuan",
+  "license": "GPL-3.0",
+  "bugs": {
+    "url": "https://github.com/gemdino/assistant-view-service/issues"
+  },
+  "homepage": "https://github.com/gemdino/assistant-view-service#readme",
+  "dependencies": {
+    "adm-zip": "^0.5.1",
+    "axios": "^0.21.1",
+    "express": "^4.17.1",
+    "multer": "^1.4.2"
+  }
+}
