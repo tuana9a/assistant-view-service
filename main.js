@@ -69,6 +69,20 @@ async function initServer() {
             resp.end();
         });
     });
+    app.get('/api/public/register-preview/guess-class', async function (req,resp) {
+        let id = req.query.id;
+        let term = req.query.term;
+        let url = `${INFO.registerPreview.address}/api/public/guess-class?id=${id}&term=${term}`;
+        resp.setHeader("Content-Type", "application/json; charset=utf-8");
+
+        axios.get(url).then(response => {
+            resp.write(JSON.stringify(response.data));
+            resp.end();
+        }).catch(e => {
+            resp.write(JSON.stringify({ success: false, body: e }));
+            resp.end();
+        });
+    });
     app.get('/api/public/school-service/terms', async function (req, resp) {
         let url = `${INFO.schoolService.address}/api/public/terms`;
         resp.setHeader("Content-Type", "application/json; charset=utf-8");
