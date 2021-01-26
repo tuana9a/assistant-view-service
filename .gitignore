@@ -1,6 +1,7 @@
 # custom
 webapp/*
-!webapp/index.html
+!webapp/helloworld.txt
+!webapp/404.html
 
 # Logs
 *.log

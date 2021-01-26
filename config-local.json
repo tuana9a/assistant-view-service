@@ -3,6 +3,7 @@
         "port": "80"
     },
     "ROOT_KEY": "AIzaSyCnZapIqx3X-F0Yq8iQf3XfaleXNwNZB3g",
+    "WEBAPP_DRIVE": "1omNpCoEDTCML2VevpBYamPqTl-QpbFC9",
 
     "registerPreview": {
         "address": "http://192.168.100.3:1426"
