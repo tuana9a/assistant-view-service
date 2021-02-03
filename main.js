@@ -7,12 +7,14 @@ const express = require("express");
 
 const upload = multer({ limits: { fileSize: 10 * 1024 * 1024 } });
 
+const common = require("./common/common");
 const log_helper = require("./common/log-helper");
 const date_helper = require("./common/date-helper");
 
 
 const ROOT_FOLDER = __dirname;
-const CONFIG = {
+var CONFIG = {
+    isLocal: false,
     server: {
         port: -1,
     },
@@ -23,6 +25,8 @@ const CONFIG = {
         address: ""
     },
     WEBAPP_DRIVE: "",
+}
+var SECURITY = {
     ROOT_KEY: "",
     CURRENT_KEY: "",
 }
@@ -31,21 +35,31 @@ const CONFIG = {
 //SECTION: I/O
 async function loadConfig() {
     console.log(String(fs.readFileSync("favicon.txt")));
+
     return Promise.all([
         new Promise((resolve, reject) => {
-            let whichConfig = process.argv[2] == "--local" ? "config-local.json" : "config.json";
-            console.log("load config: " + whichConfig);
-            fs.readFile(whichConfig, "utf-8", (error, data) => {
-                let config = JSON.parse(data);
-                CONFIG.server = config.server;
-                CONFIG.registerPreview = config.registerPreview;
-                CONFIG.schoolService = config.schoolService;
-                CONFIG.ROOT_KEY = config.ROOT_KEY;
-                CONFIG.WEBAPP_DRIVE = config.WEBAPP_DRIVE;
+            fs.readFile("./config/config-local.json", "utf-8", (e, data) => {
+                if (e) {
+                    fs.readFile("./config/config.json", "utf-8", (e, data) => {
+                        console.log("load config.json");
+                        CONFIG = JSON.parse(data);
+                        CONFIG.isLocal = false;
+                        resolve();
+                    });
+                    return;
+                }
+                console.log("load config-local.json");
+                CONFIG = JSON.parse(data);
+                CONFIG.isLocal = true;
                 resolve();
             });
         }),
-
+        new Promise((resolve, reject) => {
+            fs.readFile("./config/security.json", "utf-8", (e, data) => {
+                SECURITY = JSON.parse(data);
+                resolve();
+            });
+        }),
     ]);
 }
 async function initServer() {
@@ -60,6 +74,7 @@ async function initServer() {
     app.get('/api/public/register-preview/classes', async function (req, resp) {
         let ids = req.query.ids;
         let term = req.query.term;
+
         let url = `${CONFIG.registerPreview.address}/api/public/classes?ids=${ids}&term=${term}`;
         resp.setHeader("Content-Type", "application/json; charset=utf-8");
 
@@ -71,10 +86,11 @@ async function initServer() {
             resp.end();
         });
     });
-    app.get('/api/public/register-preview/guess-class', async function (req, resp) {
-        let id = req.query.id;
+    app.get('/api/public/register-preview/guess-classes', async function (req, resp) {
+        let ids = req.query.ids;
         let term = req.query.term;
-        let url = `${CONFIG.registerPreview.address}/api/public/guess-class?id=${id}&term=${term}`;
+
+        let url = `${CONFIG.registerPreview.address}/api/public/guess-classes?ids=${ids}&term=${term}`;
         resp.setHeader("Content-Type", "application/json; charset=utf-8");
 
         axios.get(url).then(response => {
@@ -86,6 +102,7 @@ async function initServer() {
         });
     });
     app.get('/api/public/school-service/terms', async function (req, resp) {
+
         let url = `${CONFIG.schoolService.address}/api/public/terms`;
         resp.setHeader("Content-Type", "application/json; charset=utf-8");
 
@@ -98,6 +115,7 @@ async function initServer() {
         });
     });
     app.get('/api/public/school-service/current-term', async function (req, resp) {
+
         let url = `${CONFIG.schoolService.address}/api/public/current-term`;
         resp.setHeader("Content-Type", "application/json; charset=utf-8");
 
@@ -111,7 +129,7 @@ async function initServer() {
     });
 
 
-    app.get('/register-preview', async function (req,resp) {
+    app.get('/register-preview', async function (req, resp) {
         resp.sendFile(ROOT_FOLDER + '/webapp/register-preview.html', (err) => {
             if (err) {
                 resp.status(404).sendFile(ROOT_FOLDER + '/webapp/404.html', (err) => {
@@ -120,7 +138,7 @@ async function initServer() {
             }
         });
     });
-    app.get('/automate-register', async function(req, resp) {
+    app.get('/automate-register', async function (req, resp) {
         resp.sendFile(ROOT_FOLDER + '/webapp/automate-register.html', (err) => {
             if (err) {
                 resp.status(404).sendFile(ROOT_FOLDER + '/webapp/404.html', (err) => {
@@ -132,17 +150,18 @@ async function initServer() {
 
 
     app.post('/api/admin/webapp', upload.single('file'), async function (req, resp) {
-        resp.setHeader("Content-Type", "application/json; charset=utf-8");
-        let result = { success: true, body: {} };
-
         let auth = req.headers["auth"];
-        if (auth == CONFIG.CURRENT_KEY) {
+
+        let result = { success: true, body: {} };
+        resp.setHeader("Content-Type", "application/json; charset=utf-8");
+
+        if (auth == SECURITY.CURRENT_KEY) {
             let file = req.file;
             if (file && file.size != 0) {
                 result.body = "update success";
-                let zipPath = "./webapp/" + file.originalname;
+                let zipPath = "./webapp/webapp.zip";
                 fs.writeFileSync(zipPath, file.buffer, { flag: "w" });
-                new adm_zip(zipPath).extractAllTo("./webapp/", true);
+                loadWebApp_zip();
             } else {
                 result.body = "no file";
             }
@@ -155,14 +174,15 @@ async function initServer() {
         resp.end();
     });
     app.put('/api/micro/current-key', async function (req, resp) {
-        resp.setHeader("Content-Type", "application/json; charset=utf-8");
         let body = req.body;
         let auth = req.headers["auth"];
+
         let result = { success: true, body: {} };
+        resp.setHeader("Content-Type", "application/json; charset=utf-8");
 
         let key = body.key;
-        if (auth == CONFIG.ROOT_KEY) {
-            CONFIG.CURRENT_KEY = key;
+        if (auth == SECURITY.ROOT_KEY) {
+            SECURITY.CURRENT_KEY = key;
             result.body = "update success";
         } else {
             result.success = false;
@@ -171,7 +191,7 @@ async function initServer() {
         resp.end();
     });
 
-    
+
     app.get('/*', async function (req, resp) {
         resp.sendFile(ROOT_FOLDER + '/webapp' + req.path, (err) => {
             if (err) {
@@ -192,34 +212,20 @@ async function initServer() {
         server.on("error", reject);
     });
 }
-async function download(url = "", outputPath = "") {
-    const outputStream = fs.createWriteStream(outputPath);
-
-    return axios({ method: 'GET', url: url, responseType: 'stream', }).then(response => {
-        //ensure that the user can call `then()` only when the file has been downloaded entirely.
-        return new Promise((resolve, reject) => {
-            response.data.pipe(outputStream);
-            let error = null;
-            outputStream.on('error', err => {
-                error = err;
-                outputStream.close();
-                reject(err);
-            });
-            outputStream.on('close', () => {
-                if (!error) {
-                    resolve(true);
-                }
-                //no need to call the reject here, as it will have been called in the
-                //'error' stream;
-            });
-        });
-    });
+async function loadWebApp_zip() {
+    let zipPath = "./webapp/webapp.zip";
+    try {
+        new adm_zip(zipPath).extractAllTo("./webapp/", true);
+    } catch (e) {
+        log_helper.error(e);
+    }
 }
 async function pullWebApp_zip() {
     let zipPath = "./webapp/webapp.zip";
     const FILE_URL = "https://drive.google.com/uc?export=download&id=" + CONFIG.WEBAPP_DRIVE;
-    await download(FILE_URL, zipPath).catch(log_helper.error);
-    new adm_zip(zipPath).extractAllTo("./webapp/", true);
+    return common.axios_download(FILE_URL, zipPath)
+        .then(loadWebApp_zip)
+        .catch(log_helper.error);
 }
 
 

@@ -2,6 +2,7 @@
 webapp/*
 !webapp/helloworld.txt
 !webapp/404.html
+config-local.json
 
 # Logs
 *.log

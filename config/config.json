@@ -1,16 +1,12 @@
 {
-    "server":{
+    "server": {
         "port": "80"
     },
-    "ROOT_KEY": "AIzaSyCnZapIqx3X-F0Yq8iQf3XfaleXNwNZB3g",
-    "WEBAPP_DRIVE": "1omNpCoEDTCML2VevpBYamPqTl-QpbFC9",
-
     "registerPreview": {
         "address": "https://assistant-register-preview.herokuapp.com"
     },
     "schoolService": {
         "address": "https://assistant-school-service.herokuapp.com"
-    }
+    },
+    "WEBAPP_DRIVE": "1omNpCoEDTCML2VevpBYamPqTl-QpbFC9"
 }
-
-
