@@ -1,8 +1,13 @@
 # custom
+config/*local.json
+*.cmd
+resource/*
+!resource/helloworld.txt
+
 webapp/*
 !webapp/helloworld.txt
 !webapp/404.html
-config-local.json
+*.code-workspace
 
 # Logs
 *.log

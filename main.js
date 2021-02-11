@@ -13,55 +13,79 @@ const date_helper = require("./common/date-helper");
 
 
 const ROOT_FOLDER = __dirname;
-var CONFIG = {
-    isLocal: false,
-    server: {
+const CONFIG = {
+    SERVER: {
+        isLocal: false,
         port: -1,
     },
-    registerPreview: {
-        address: ""
+    SECURITY: {
+        isLocal: false,
+        ROOT_KEY: "",
+        CURRENT_KEY: "",
     },
-    schoolService: {
-        address: ""
+    DATABASE: {
+        isLocal: false,
+        address: "",
+        username: "",
+        password: "",
+        authSource: "",
     },
-    WEBAPP_DRIVE: "",
+    MICROSERVICE: {
+        isLocal: false,
+        viewService: {
+            address: ""
+        },
+        masterService: {
+            address: ""
+        },
+        schoolService: {
+            address: ""
+        },
+        registerPreview: {
+            address: ""
+        },
+        securityService: {
+            address: ""
+        }
+    },
+    GOOGLE_DRIVE: {
+        isLocal: false,
+        WEBAPP_ZIP: "",
+    }
 }
-var SECURITY = {
-    ROOT_KEY: "",
-    CURRENT_KEY: "",
+
+
+//SECTION: config
+async function loadConfig(name, which) {
+    return new Promise((resolve, reject) => {
+        fs.readFile(`./config/${name}-local.json`, "utf-8", (err, data) => {
+            if (err) {
+                fs.readFile(`./config/${name}.json`, "utf-8", (err, data) => {
+                    console.log(`load ${name}.json`);
+                    CONFIG[`${which}`] = JSON.parse(data);
+                    resolve();
+                });
+                return;
+            }
+            console.log(`load ${name}-local.json`);
+            CONFIG[`${which}`] = JSON.parse(data);
+            resolve();
+        });
+    });
+}
+async function loadAllConfig() {
+    console.log(String(fs.readFileSync("favicon.txt")));
+
+    return Promise.all([
+        loadConfig("server", "SERVER"),
+        loadConfig("microservice", "MICROSERVICE"),
+        loadConfig("security", "SECURITY"),
+        loadConfig("google-drive", "GOOGLE_DRIVE"),
+    ]);
 }
 
 
 //SECTION: I/O
-async function loadConfig() {
-    console.log(String(fs.readFileSync("favicon.txt")));
-
-    return Promise.all([
-        new Promise((resolve, reject) => {
-            fs.readFile("./config/config-local.json", "utf-8", (e, data) => {
-                if (e) {
-                    fs.readFile("./config/config.json", "utf-8", (e, data) => {
-                        console.log("load config.json");
-                        CONFIG = JSON.parse(data);
-                        CONFIG.isLocal = false;
-                        resolve();
-                    });
-                    return;
-                }
-                console.log("load config-local.json");
-                CONFIG = JSON.parse(data);
-                CONFIG.isLocal = true;
-                resolve();
-            });
-        }),
-        new Promise((resolve, reject) => {
-            fs.readFile("./config/security.json", "utf-8", (e, data) => {
-                SECURITY = JSON.parse(data);
-                resolve();
-            });
-        }),
-    ]);
-}
 async function initServer() {
     const app = express();
     app.use(express.json());
@@ -75,7 +99,7 @@ async function initServer() {
         let ids = req.query.ids;
         let term = req.query.term;
 
-        let url = `${CONFIG.registerPreview.address}/api/public/classes?ids=${ids}&term=${term}`;
+        let url = `${CONFIG.MICROSERVICE.registerPreview.address}/api/public/classes?ids=${ids}&term=${term}`;
         resp.setHeader("Content-Type", "application/json; charset=utf-8");
 
         axios.get(url).then(response => {
@@ -90,7 +114,7 @@ async function initServer() {
         let ids = req.query.ids;
         let term = req.query.term;
 
-        let url = `${CONFIG.registerPreview.address}/api/public/guess-classes?ids=${ids}&term=${term}`;
+        let url = `${CONFIG.MICROSERVICE.registerPreview.address}/api/public/guess-classes?ids=${ids}&term=${term}`;
         resp.setHeader("Content-Type", "application/json; charset=utf-8");
 
         axios.get(url).then(response => {
@@ -103,7 +127,7 @@ async function initServer() {
     });
     app.get('/api/public/school-service/terms', async function (req, resp) {
 
-        let url = `${CONFIG.schoolService.address}/api/public/terms`;
+        let url = `${CONFIG.MICROSERVICE.schoolService.address}/api/public/terms`;
         resp.setHeader("Content-Type", "application/json; charset=utf-8");
 
         axios.get(url).then(response => {
@@ -116,7 +140,22 @@ async function initServer() {
     });
     app.get('/api/public/school-service/current-term', async function (req, resp) {
 
-        let url = `${CONFIG.schoolService.address}/api/public/current-term`;
+        let url = `${CONFIG.MICROSERVICE.schoolService.address}/api/public/current-term`;
+        resp.setHeader("Content-Type", "application/json; charset=utf-8");
+
+        axios.get(url).then(response => {
+            resp.write(JSON.stringify(response.data));
+            resp.end();
+        }).catch(e => {
+            resp.write(JSON.stringify({ success: false, body: e }));
+            resp.end();
+        });
+    });
+    app.get('/api/public/school-service/student-register/:term/:mssv', async function (req, resp) {
+        let term = req.params.term;
+        let mssv = req.params.mssv;
+
+        let url = `${CONFIG.MICROSERVICE.schoolService.address}/api/public/student-register/${term}/${mssv}`;
         resp.setHeader("Content-Type", "application/json; charset=utf-8");
 
         axios.get(url).then(response => {
@@ -155,7 +194,7 @@ async function initServer() {
         let result = { success: true, body: {} };
         resp.setHeader("Content-Type", "application/json; charset=utf-8");
 
-        if (auth == SECURITY.CURRENT_KEY) {
+        if (auth == CONFIG.SECURITY.CURRENT_KEY) {
             let file = req.file;
             if (file && file.size != 0) {
                 result.body = "update success";
@@ -181,8 +220,8 @@ async function initServer() {
         resp.setHeader("Content-Type", "application/json; charset=utf-8");
 
         let key = body.key;
-        if (auth == SECURITY.ROOT_KEY) {
-            SECURITY.CURRENT_KEY = key;
+        if (auth == CONFIG.SECURITY.ROOT_KEY) {
+            CONFIG.SECURITY.CURRENT_KEY = key;
             result.body = "update success";
         } else {
             result.success = false;
@@ -204,7 +243,7 @@ async function initServer() {
 
 
     return new Promise((resolve, reject) => {
-        const server = app.listen(process.env.PORT || CONFIG.server.port, function () {
+        const server = app.listen(process.env.PORT || CONFIG.SERVER.port, function () {
             let port = server.address().port;
             console.log("server start at http://%s:%s", "127.0.0.1", port);
             resolve();
@@ -222,7 +261,7 @@ async function loadWebApp_zip() {
 }
 async function pullWebApp_zip() {
     let zipPath = "./webapp/webapp.zip";
-    const FILE_URL = "https://drive.google.com/uc?export=download&id=" + CONFIG.WEBAPP_DRIVE;
+    const FILE_URL = "https://drive.google.com/uc?export=download&id=" + CONFIG.GOOGLE_DRIVE.WEBAPP_ZIP;
     return common.axios_download(FILE_URL, zipPath)
         .then(loadWebApp_zip)
         .catch(log_helper.error);
@@ -230,7 +269,7 @@ async function pullWebApp_zip() {
 
 
 async function main() {
-    loadConfig().then(() => {
+    loadAllConfig().then(() => {
         initServer().then(() => {
             pullWebApp_zip();
         }).catch(log_helper.error);
