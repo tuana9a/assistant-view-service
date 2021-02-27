@@ -4,7 +4,8 @@
   "description": "View Layer for HUST Assistant",
   "main": "main.js",
   "scripts": {
-    "start": "node main.js",
+    "start": "node out/main.js",
+    "reformat-code": "prettier --config .prettierrc src/**/*.ts --write",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -22,5 +23,11 @@
     "axios": "^0.21.1",
     "express": "^4.17.1",
     "multer": "^1.4.2"
+  },
+  "devDependencies": {
+    "@types/adm-zip": "^0.4.33",
+    "@types/express": "^4.17.11",
+    "@types/multer": "^1.4.5",
+    "@types/node": "^14.14.31"
   }
 }
