@@ -10,6 +10,7 @@ const CONFIG: any = {};
 var registerPreviewView: RegisterPreviewView;
 
 const app = express();
+const WEBAPP_ZIP_PATH = './resource/webapp-view.zip';
 
 async function loadConfig(CONFIG: any, configfolder: string, name: string) {
     return new Promise((resolve) => {
@@ -18,13 +19,13 @@ async function loadConfig(CONFIG: any, configfolder: string, name: string) {
             if (err) {
                 path = `${configfolder}/${name}.json`;
                 fs.readFile(path, 'utf-8', (_err, data) => {
-                    console.log(` * ${name}.json`);
+                    console.log(` * config: ${name}.json`);
                     CONFIG[`${name}`] = JSON.parse(data);
                     resolve(undefined);
                 });
                 return;
             }
-            console.log(` * ${name}-local.json`);
+            console.log(` * config: ${name}-local.json`);
             CONFIG[`${name}`] = JSON.parse(data);
             resolve(undefined);
         });
@@ -55,21 +56,20 @@ function uploadWebApp_zip(req: Request, resp: Response) {
     let file = req.file;
     if (file && file.size != 0) {
         result.body = 'upload success';
-        let zipPath = './webapp/webapp.zip';
-        fs.writeFileSync(zipPath, file.buffer, { flag: 'w' });
-        unpackWebApp_zip();
+        fs.writeFileSync('./resource/' + file.originalname, file.buffer, { flag: 'w' });
+        extractWebApp_zip(WEBAPP_ZIP_PATH);
     } else {
         result.body = 'file not found: Chuc ban may man lan sau';
     }
 
     resp.send(result);
 }
-function unpackWebApp_zip() {
-    let path = './webapp/webapp.zip';
+function extractWebApp_zip(path: string) {
     try {
         new adm_zip(path).extractAllTo('./webapp/', true);
+        console.log(" * extract: " + path);
     } catch (e) {
-        console.error(e);
+        console.log(" * extract: FAILED: " + e);
     }
 }
 
@@ -82,7 +82,7 @@ export class App {
     }
 
     async init() {
-        unpackWebApp_zip();
+        extractWebApp_zip(WEBAPP_ZIP_PATH);
         await loadAllConfig(CONFIG, './config');
 
         registerPreviewView = new RegisterPreviewView(this);
@@ -100,6 +100,6 @@ export class App {
     async run() {
         let port = process.env.PORT || CONFIG.server.port;
         app.listen(port).on('error', console.error);
-        console.log(` * http://localhost:${port}`);
+        console.log(` * listen: http://localhost:${port}`);
     }
 }

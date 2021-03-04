@@ -3,11 +3,11 @@ config/*local.json
 *.cmd
 resource/*
 !resource/helloworld.txt
+*.code-workspace
 
 webapp/*
-!webapp/helloworld.txt
-!webapp/webapp.zip
-*.code-workspace
+!webapp/version.txt
+!resource/webapp-view.zip
 
 # Logs
 *.log
