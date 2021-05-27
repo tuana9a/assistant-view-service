@@ -1,4 +1,4 @@
 {
-    "isLocal": false,
+    "address" : "http://localhost:80",
     "port": "80"
 }
