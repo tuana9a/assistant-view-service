@@ -8,7 +8,9 @@ class Utils {
         }
     }
     fromMapToArray_Value(map: Map<any, any>) {
-        return Array.from(map, ([_key, value]) => value);
+        return Array.from(map, function ([_key, value]) {
+            return value;
+        });
     }
     fromSetToArray(set: Set<any>) {
         return Array.from(set);

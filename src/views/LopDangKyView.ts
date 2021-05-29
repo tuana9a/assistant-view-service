@@ -21,13 +21,13 @@ class LopDangKyView {
 
         axios
             .get(url)
-            .then((response) => {
+            .then(function (response) {
                 resp.setHeader('Content-Type', 'application/json; charset=utf-8');
                 resp.send(response.data);
             })
-            .catch((e) => {
+            .catch(function (err) {
                 resp.setHeader('Content-Type', 'application/json; charset=utf-8');
-                resp.send(ResponseEntity.builder().code(-1).message('failed').data(String(e)));
+                resp.send(ResponseEntity.builder().code(-1).message('failed').data(String(err)));
             });
     }
     async findStudentByTermAndMssv(req: Request, resp: Response) {
@@ -39,13 +39,13 @@ class LopDangKyView {
 
         axios
             .get(url)
-            .then((response) => {
+            .then(function (response) {
                 resp.setHeader('Content-Type', 'application/json; charset=utf-8');
                 resp.send(response.data);
             })
-            .catch((e) => {
+            .catch(function (err) {
                 resp.setHeader('Content-Type', 'application/json; charset=utf-8');
-                resp.send(ResponseEntity.builder().code(-1).message('failed').data(String(e)));
+                resp.send(ResponseEntity.builder().code(-1).message('failed').data(String(err)));
             });
     }
 }
