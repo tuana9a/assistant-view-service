@@ -1,4 +1,5 @@
 {
-    "address" : "http://localhost:80",
-    "port": "80"
+    "address": "http://localhost:80",
+    "port": "80",
+    "master-address": "http://localhost:1406"
 }

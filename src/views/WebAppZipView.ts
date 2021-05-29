@@ -6,19 +6,16 @@ import { webAppZipService } from '../services/WebAppZipService';
 
 class WebAppZipView {
     uploadWebApp_zip(req: Request, resp: Response) {
-        let result = new ResponseEntity();
         resp.setHeader('Content-Type', 'application/json; charset=utf-8');
 
         let file = req.file;
         if (file && file.size != 0) {
-            result.body = 'upload success';
             webAppZipService.storeWebApp_zip('./resource/' + file.originalname, file);
-            webAppZipService.extractWebApp_zip(app.CONFIG.WEBAPP_ZIP_PATH);
+            webAppZipService.extractWebApp_zip(app.getConfig('webapp-zip-path'));
+            resp.send(ResponseEntity.builder().code(1).message('success upload').build());
         } else {
-            result.body = 'file not found: Chuc ban may man lan sau';
+            resp.send(ResponseEntity.builder().code(-1).message('file not found: Chuc ban may man lan sau').build());
         }
-
-        resp.send(result);
     }
 }
 
