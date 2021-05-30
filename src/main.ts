@@ -53,17 +53,17 @@ class App {
         this.setConfig('workers.address.' + name, address);
     }
     async askMaster() {
+        let url = `${app.getConfig('server.master-address')}/api/worker/ask/worker-address`;
         let from = {
             name: 'assistant-view-service',
             address: app.getConfig('server.address')
         };
         let asks = ['assistant-view-service', 'assistant-school-register-preview'];
-        return askMasterService.askWorkerAddress(from, asks);
+        return askMasterService.askWorkerAddress(url, from, asks);
     }
 }
 
 export const app = new App();
-app.setConfig('webapp-zip-path', './resource/webapp.zip');
 app.autoConfig('./config');
 
 const server = express();
@@ -75,10 +75,12 @@ server.get('/api/public/register-preview/classes', lopDangKyView.findClassesByTe
 server.get('/api/public/register-preview/student', lopDangKyView.findStudentByTermAndMssv);
 server.post('/api/admin/webapp', upload.single('file'), webAppZipView.uploadWebApp_zip);
 
-webAppZipService.extractWebApp_zip(app.getConfig('webapp-zip-path'));
 let port = process.env.PORT || app.getConfig('server.port');
 server.listen(port).on('error', console.error);
 console.log(` * listen: ${app.getConfig('server.address')}`);
+
+//EXPLAIN: init frontend
+webAppZipService.extractWebApp_zip(app.getConfig('server.path.zips.webapp'));
 
 async function intervalAskMaster() {
     await app.askMaster();

@@ -11,7 +11,7 @@ class WebAppZipView {
         let file = req.file;
         if (file && file.size != 0) {
             webAppZipService.storeWebApp_zip('./resource/' + file.originalname, file);
-            webAppZipService.extractWebApp_zip(app.getConfig('webapp-zip-path'));
+            webAppZipService.extractWebApp_zip(app.getConfig('server.path.zips.webapp'));
             resp.send(ResponseEntity.builder().code(1).message('success upload').build());
         } else {
             resp.send(ResponseEntity.builder().code(-1).message('file not found: Chuc ban may man lan sau').build());
