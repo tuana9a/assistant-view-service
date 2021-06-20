@@ -1,4 +1,3 @@
-import fs from 'fs';
 import multer from 'multer';
 import express from 'express';
 import { webAppZipService } from './services/WebAppZipService';
@@ -6,27 +5,21 @@ import { requestFilter } from './security/RequestFilter';
 import { webAppZipView } from './views/WebAppZipView';
 import { lopDangKyView } from './views/LopDangKyView';
 import { askMasterService } from './services/AskMasterService';
+import { CONFIG } from './config/AppConfig';
 
 class App {
-    CONFIG: any = {};
-    loadConfig(name: string, path: string) {
+    private RUNTIME: any = {};
+    getRuntime(path: string) {
+        let paths = path.split('.');
         try {
-            let data = fs.readFileSync(path, { flag: 'r', encoding: 'utf-8' });
-            this.CONFIG[`${name}`] = JSON.parse(data);
-            console.log(` * config: ${path}: SUCCESS`);
+            return paths.reduce(function (pointer: any, cur: string) {
+                return pointer[cur];
+            }, this.RUNTIME);
         } catch (e) {
-            console.log(` * config: ${path}: FAILED`);
+            return '';
         }
     }
-    getConfig(path: string) {
-        let paths = path.split('.');
-        return paths.reduce(function (pointer: any, cur: string) {
-            let check = pointer[cur];
-            if (!check) pointer[cur] = {};
-            return pointer[cur];
-        }, this.CONFIG);
-    }
-    setConfig(path: string, value: string) {
+    setRuntime(path: string, value: string) {
         let paths = path.split('.');
         let length = paths.length;
         let p = paths.reduce(function (pointer: any, cur: string, i: number) {
@@ -34,38 +27,21 @@ class App {
             let check = pointer[cur];
             if (!check) pointer[cur] = {};
             return pointer[cur];
-        }, this.CONFIG);
+        }, this.RUNTIME);
         p[paths[length - 1]] = value;
     }
-    autoConfig(configFolder: string) {
-        let filenames = fs.readdirSync(configFolder);
-        for (let filename of filenames) {
-            if (filename.match(/.json$/)) {
-                let name = filename.slice(0, -5);
-                this.loadConfig(name, configFolder + '/' + filename);
-            }
-        }
-    }
     getWorkerAddress(name: string) {
-        return this.getConfig('workers.address.' + name);
+        return this.getRuntime('workers.address.' + name);
     }
     setWorkerAddress(name: string, address: string) {
-        this.setConfig('workers.address.' + name, address);
-    }
-    async askMaster() {
-        let url = `${app.getConfig('server.master-address')}/api/worker/ask/worker-address`;
-        let from = {
-            name: 'assistant-view-service',
-            address: app.getConfig('server.address')
-        };
-        let asks = ['assistant-view-service', 'assistant-school-register-preview'];
-        return askMasterService.askWorkerAddress(url, from, asks);
+        this.setRuntime('workers.address.' + name, address);
     }
 }
 
 export const app = new App();
-app.autoConfig('./config');
 
+//EXPLAIN: init frontend
+webAppZipService.extractWebApp_zip(CONFIG.PATH.WEBAPP_ZIP);
 const server = express();
 const upload = multer({ limits: { fileSize: 10 * 1024 * 1024 } });
 server.use(express.json());
@@ -75,15 +51,22 @@ server.get('/api/public/register-preview/classes', lopDangKyView.findClassesByTe
 server.get('/api/public/register-preview/student', lopDangKyView.findStudentByTermAndMssv);
 server.post('/api/admin/webapp', upload.single('file'), webAppZipView.uploadWebApp_zip);
 
-let port = process.env.PORT || app.getConfig('server.port');
+let port = process.env.PORT || CONFIG.SERVER.PORT;
 server.listen(port).on('error', console.error);
-console.log(` * listen: ${app.getConfig('server.address')}`);
+console.log(` * listen: ${CONFIG.SERVER.ADDRESS}`);
 
-//EXPLAIN: init frontend
-webAppZipService.extractWebApp_zip(app.getConfig('server.path.zips.webapp'));
-
+async function askMaster() {
+    let url = `${CONFIG.SERVER.MASTER_ADDRESS}/api/worker/ask/worker-address`;
+    let from = {
+        name: CONFIG.SERVER.NAME,
+        address: CONFIG.SERVER.ADDRESS
+    };
+    let asks = [CONFIG.SERVER.NAME, 'assistant-school-register-preview'];
+    return askMasterService.askWorkerAddress(url, from, asks);
+}
 async function intervalAskMaster() {
-    await app.askMaster();
+    await askMaster();
     setTimeout(intervalAskMaster, 10_000);
 }
+
 intervalAskMaster();

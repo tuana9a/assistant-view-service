@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
+import { CONFIG } from '../config/AppConfig';
 
-import { app } from '../main';
 import { ResponseEntity } from '../models/ResponseEntity';
 import { webAppZipService } from '../services/WebAppZipService';
 
@@ -11,7 +11,7 @@ class WebAppZipView {
         let file = req.file;
         if (file && file.size != 0) {
             webAppZipService.storeWebApp_zip('./resource/' + file.originalname, file);
-            webAppZipService.extractWebApp_zip(app.getConfig('server.path.zips.webapp'));
+            webAppZipService.extractWebApp_zip(CONFIG.PATH.WEBAPP_ZIP);
             resp.send(ResponseEntity.builder().code(1).message('success upload').build());
         } else {
             resp.send(ResponseEntity.builder().code(-1).message('file not found: Chuc ban may man lan sau').build());

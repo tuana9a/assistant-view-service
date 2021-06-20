@@ -1,14 +1,7 @@
-# custom
-config/*local.json
-*.cmd
-*.sh
-resource/*
-!resource/helloworld.txt
-*.code-workspace
-
+# tuana9a
 webapp/*
 !webapp/version.txt
-!resource/webapp-view.zip
+*.code-workspace
 
 # Logs
 *.log

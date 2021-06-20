@@ -17,7 +17,7 @@ class AskMasterService {
                 if (masterResponse.code == 1) {
                     let data = masterResponse.data;
                     names.forEach(function (name) {
-                        app.setConfig(`workers.address.${name}`, data[name]);
+                        app.setRuntime(`workers.address.${name}`, data[name]);
                     });
                 }
             })
