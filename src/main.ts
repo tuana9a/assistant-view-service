@@ -41,7 +41,7 @@ class App {
 export const app = new App();
 
 //EXPLAIN: init frontend
-webAppZipService.extractWebApp_zip(CONFIG.PATH.WEBAPP_ZIP);
+webAppZipService.extractWebApp_zip(CONFIG.path.webapp_zip);
 const server = express();
 const upload = multer({ limits: { fileSize: 10 * 1024 * 1024 } });
 server.use(express.json());
@@ -51,17 +51,17 @@ server.get('/api/public/register-preview/classes', lopDangKyView.findClassesByTe
 server.get('/api/public/register-preview/student', lopDangKyView.findStudentByTermAndMssv);
 server.post('/api/admin/webapp', upload.single('file'), webAppZipView.uploadWebApp_zip);
 
-let port = process.env.PORT || CONFIG.SERVER.PORT;
+let port = process.env.PORT || CONFIG.server.port;
 server.listen(port).on('error', console.error);
-console.log(` * listen: ${CONFIG.SERVER.ADDRESS}`);
+console.log(` * listen: ${CONFIG.server.address}`);
 
 async function askMaster() {
-    let url = `${CONFIG.SERVER.MASTER_ADDRESS}/api/worker/ask/worker-address`;
+    let url = `${CONFIG.master.address}/api/worker/ask/worker-address`;
     let from = {
-        name: CONFIG.SERVER.NAME,
-        address: CONFIG.SERVER.ADDRESS
+        name: CONFIG.worker.name,
+        address: CONFIG.server.address
     };
-    let asks = [CONFIG.SERVER.NAME, 'assistant-school-register-preview'];
+    let asks = CONFIG.worker.ask;
     return askMasterService.askWorkerAddress(url, from, asks);
 }
 async function intervalAskMaster() {

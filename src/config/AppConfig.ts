@@ -1,11 +1,21 @@
-export const CONFIG = {
-    SERVER: {
-        NAME: 'assistant-view-service',
-        ADDRESS: 'http://localhost:80',
-        PORT: 80,
-        MASTER_ADDRESS: 'http://localhost:1406'
+import fs from 'fs';
+
+var config = {
+    server: {
+        address: '',
+        port: -1
     },
-    PATH: {
-        WEBAPP_ZIP: './resource/webapp.zip'
+    worker: {
+        name: '',
+        ask: ['']
+    },
+    master: {
+        address: ''
+    },
+    path: {
+        webapp_zip: ''
     }
 };
+config = JSON.parse(fs.readFileSync('resource/app-config.json', { flag: 'r', encoding: 'utf-8' }));
+
+export const CONFIG = config;

@@ -1,6 +1,6 @@
 # tuana9a
-webapp/*
-!webapp/version.txt
+webapp/
+resource/
 *.code-workspace
 
 # Logs
