@@ -2,6 +2,8 @@
 webapp/
 resource/
 *.code-workspace
+*.cmd
+*.sh
 
 # Logs
 *.log
