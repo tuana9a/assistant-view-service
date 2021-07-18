@@ -1,9 +1,10 @@
 # tuana9a
-webapp/
 resource/
 *.code-workspace
 *.cmd
 *.sh
+*.zip
+*test*
 
 # Logs
 *.log

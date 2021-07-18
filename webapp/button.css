@@ -1,0 +1,108 @@
+
+.bigButton {
+    font-size: 40px;
+}
+.midButton {
+    font-size: 30px;
+}
+.smallButton {
+    font-size: 20px;
+}
+.tallButton {
+    font-size: 20px;
+}
+
+/*chỉ cần thêm class vào thẻ button là dùng được*/
+.neonButtonSlide {
+    display: inline-block;
+    position: relative;
+    overflow: hidden;
+    z-index: 1;
+
+    border: none;
+    outline: none;
+    padding: 3px 10px;
+    border-radius: 5px;
+
+    cursor: default;
+
+    color: var(--green_neon);
+    background: var(--black_neon);
+
+    transition: 0.1s;
+    transition-delay: 0.1s;
+}
+.neonButtonSlide::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: -1;
+    background-color: var(--green_neon);
+
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: 0.1s linear;
+}
+.neonButtonSlide:hover {
+    color: var(--black_neon);
+    box-shadow: 0 0 10px var(--green_neon), 0 0 40px var(--green_neon),
+        0 0 80px var(--green_neon);
+}
+.neonButtonSlide:hover::before {
+    transform: scaleX(1);
+}
+
+.neonButtonClick {
+    display: inline-block;
+    position: relative;
+    z-index: 1;
+
+    outline: none;
+    padding: 3px 10px;
+    border-radius: 5px;
+    border: 1px solid var(--green_neon);
+
+    cursor: default;
+
+    color: var(--green_neon);
+    background: var(--black_neon);
+
+    box-shadow: var(--fade_green_neon) -3px 3px,
+        var(--fade_green_neon) -2.5px 2.5px, var(--fade_green_neon) -2px 2px,
+        var(--fade_green_neon) -1.5px 1.5px, var(--fade_green_neon) -1px 1px,
+        var(--fade_green_neon) -0.5px 0.5px, black -3px 3px 10px;
+    left: 3px;
+    bottom: 3px;
+
+    transition: 0s;
+}
+.neonButtonClick:active {
+    box-shadow: 0 0 20px var(--green_neon);
+    left: 0;
+    bottom: 0;
+}
+
+.neonButtonClickSimple {
+    display: inline-block;
+    position: relative;
+    z-index: 1;
+
+    border: none;
+    outline: none;
+    padding: 3px 10px;
+    border-radius: 5px;
+    border: 1px solid var(--green_neon);
+
+    cursor: default;
+
+    color: var(--green_neon);
+    background: var(--black_neon);
+
+    transition: 0s;
+}
+.neonButtonClickSimple:active {
+    box-shadow: 0 0 20px var(--green_neon);
+}

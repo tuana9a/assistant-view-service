@@ -1,0 +1,139 @@
+
+.dadFlex {
+    display: flex;
+}
+.dadFlexSpaceEven {
+    display: flex;
+    justify-content: space-evenly;
+}
+.dadFlexSpaceAround {
+    display: flex;
+    justify-content: space-around;
+}
+.dadFlexSpaceBetween {
+    display: flex;
+    justify-content: space-between;
+}
+.dadFlexSpaceEvenCenterVer {
+    display: flex;
+    align-items: center;
+    justify-content: space-evenly;
+}
+.dadFlexSpaceBetweenCenterVer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.dadFlexSpaceAroundCenterVer {
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+}
+
+.dadFlexCenter {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.dadFlexCenterHor {
+    display: flex;
+    justify-content: center;
+}
+.dadFlexCenterVer {
+    display: flex;
+    align-items: center;
+}
+
+.dadFlexWrap {
+    display: flex;
+    flex-wrap: wrap;
+}
+.dadFlexWrapSpaceEven {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-evenly;
+}
+.dadFlexWrapSpaceBetween {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+}
+
+.dadFlexWrapCenter {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+}
+.dadFlexWrapCenterHor {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+.dadFlexWrapCenterVer {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.child10 {
+    width: 10%;
+}
+.child20 {
+    width: 20%;
+}
+.child30 {
+    width: 30%;
+}
+.child40 {
+    width: 40%;
+}
+.child50 {
+    width: 50%;
+}
+.child60 {
+    width: 60%;
+}
+.child70 {
+    width: 70%;
+}
+.child80 {
+    width: 80%;
+}
+.child90 {
+    width: 90%;
+}
+.child100 {
+    width: 100%;
+}
+
+.childMin10 {
+    min-width: 10%;
+}
+.childMin20 {
+    min-width: 20%;
+}
+.childMin30 {
+    min-width: 30%;
+}
+.childMin40 {
+    min-width: 40%;
+}
+.childMin50 {
+    min-width: 50%;
+}
+.childMin60 {
+    min-width: 60%;
+}
+.childMin70 {
+    min-width: 70%;
+}
+.childMin80 {
+    min-width: 80%;
+}
+.childMin90 {
+    min-width: 90%;
+}
+.childMin100 {
+    min-width: 100%;
+}

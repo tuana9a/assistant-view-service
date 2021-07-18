@@ -1,0 +1,26 @@
+{
+    "service0": {
+        "name": "master.hust-assistant.com",
+        "address": "http://localhost:1406"
+    },
+    "service1": {
+        "name": "hust-assistant.com",
+        "address": "http://localhost:1405"
+    },
+    "service2": {
+        "name": "register-preview.hust-assistant.com",
+        "address": "http://localhost:1407"
+    },
+    "service3": {
+        "name": "master.automation.hust-assistant.com",
+        "address": "http://localhost:1408"
+    },
+    "service4": {
+        "name": "message-queue.hust-assistant.com",
+        "address": "http://localhost:1409"
+    },
+    "service5": {
+        "name": "captcha-predict.automation.hust-assistant.com",
+        "address": "http://localhost:1410"
+    }
+}
