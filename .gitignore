@@ -3,7 +3,6 @@ resource/
 *.code-workspace
 *.cmd
 *.sh
-*.zip
 *test*
 
 # Logs

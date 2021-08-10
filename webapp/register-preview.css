@@ -246,12 +246,11 @@ body {
     border-radius: 5px;
 
     padding: 2px;
-
+    width: 150px;
     font-size: 20px;
     letter-spacing: 1px;
 
     text-align: center;
-    cursor: pointer;
 }
 .weekToggle .weekPreviewTitle {
     font-size: 25px;

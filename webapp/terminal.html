@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>Terminal</title>
+
+    <link rel="stylesheet" href="common.animation.css" />
+    <link rel="stylesheet" href="common.css" />
+    <script type="module" defer src="common.animation.js"></script>
+    <script type="module" defer src="common.js"></script>
+
+    <link rel="stylesheet" href="terminal.css" />
+    <script type="module" defer src="terminal.js"></script>
+    <script type="module" defer src="terminal.command.js"></script>
+</head>
+
+<body>
+    <div class="section dadFlexCenter">
+        <div class="section">
+            <div class="section dadFlexCenter">
+                <a class="dadFlexSpaceAroundCenterVer"
+                    style="box-shadow: 1px 2px 3px black; padding: 2px; cursor: pointer; min-width: 200px; text-decoration: none; color: black;"
+                    href="/login">
+                    <span style="width: 18px; height: 18px" class="google-icon"></span>
+                    <span style="font-size: 20px">login with Google</span>
+                </a>
+            </div>
+            <div class="section">
+                <div class="note">
+                    <span class="redText boldText" style="font-size: 12px">
+                        file .csv(UTF-8), cột đầu KHÔNG chứa data quan trọng
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="section dadFlexCenter">
+        <div id="terminal" class="terminal child100">
+            <div class="title dadFlexCenter">
+                <strong>❤ Tuana9a's Terminal <b class="version redText" id="terminal-version">v2020.07</b></strong>
+            </div>
+            <div class="screen" id="terminal-screen"></div>
+            <div class="global dadFlexWrap" id="global-variables"></div>
+            <div class="typing dadFlexCenterVer">
+                <div class="inputing section positionRelative">
+                    <div class="positionAbsolute auto-complete" id="auto-complete"></div>
+                    <span id="comand-preview" class="comand-preview positionAbsolute noSelect"></span>
+                    <div class="positionAbsolute params-guide" id="params-guide" style="display: none"></div>
+                    <input class="positionRelative typing-content" autocomplete="off" id="typing-content" type="text" />
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

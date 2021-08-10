@@ -7,14 +7,6 @@ class Utils {
             return '';
         }
     }
-    fromMapToArray_Value(map: Map<any, any>) {
-        return Array.from(map, function ([_key, value]) {
-            return value;
-        });
-    }
-    fromSetToArray(set: Set<any>) {
-        return Array.from(set);
-    }
     fromAnyToNumber(input: any): number {
         try {
             let value = parseInt(input);

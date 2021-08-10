@@ -5,16 +5,11 @@
     "start": "node dist/com/tuana9a/main.js"
   },
   "dependencies": {
-    "adm-zip": "^0.5.1",
     "cors": "^2.8.5",
-    "express": "^4.17.1",
-    "multer": "^1.4.2"
+    "express": "^4.17.1"
   },
   "devDependencies": {
-    "@types/adm-zip": "^0.4.33",
     "@types/cors": "^2.8.12",
-    "@types/express": "^4.17.11",
-    "@types/multer": "^1.4.5",
-    "@types/node": "^14.14.31"
+    "@types/express": "^4.17.11"
   }
 }

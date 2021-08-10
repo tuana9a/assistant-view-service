@@ -2,43 +2,13 @@
 
 import { httpClientService, localStorageService } from './common.js';
 
-const PREFIX_PWA = 'webapp';
+var isServiceWorkderAvailable = false;
+const LOCALSTORAGE_PREFIX = 'webapp';
 const CACHE_NAME = 'webapp';
-/**
- * NOT_TO_CACHE
- * terms.json
- * version.txt
- */
-const URL_TO_CACHE = [
-    '/',
-    '/Alata.ttf',
-    '/animation.css',
-    '/animation.js',
-    '/app.css',
-    '/app.js',
-    '/button.css',
-    '/common.css',
-    '/common.js',
-    '/dad-child.css',
-    '/favicon.ico',
-    '/index.html',
-    '/manifest.json',
-    '/service-worker.js',
-    // '/terms.json',
-    // '/version.txt',
-    '/worker-config.json',
-    '/fonts/Alata.ttf',
-    '/icons/manifest-icon-192.png',
-    '/icons/manifest-icon-512.png',
-    '/register-preview/query.js',
-    '/register-preview/register-preview.css',
-    '/register-preview/register-preview.js',
-    '/register-preview/timetable.css',
-    '/register-preview/timetable.js'
-];
-const WEBAPP_VERSION_ID_TAG = document.getElementById('version');
-var CLIENT_WEBAPP_VERSION = localStorageService.get(PREFIX_PWA, 'version');
-var WEBAPP_NEWEST_VERSION = CLIENT_WEBAPP_VERSION;
+const CACHED_URLS = [];
+const SERVICE_WORKER_FILE = 'app.service-worker.v1.js';
+var CLIENT_APP_VERSION = localStorageService.get(LOCALSTORAGE_PREFIX, 'version');
+var APP_NEWEST_VERSION = CLIENT_APP_VERSION;
 export const AppConfig = {
     worker_config: {
         service0: {
@@ -68,7 +38,7 @@ export const AppConfig = {
     }
 };
 
-class WebApp {
+class CachesUtils {
     async clearCaches() {
         return caches.keys().then(function (cacheNames) {
             return Promise.all(
@@ -81,41 +51,20 @@ class WebApp {
     async backupCaches() {
         let cache = await caches.open(CACHE_NAME);
         let backup = new Map();
-        for (const url of URL_TO_CACHE) {
+        for (const url of CACHED_URLS) {
             backup.set(url, await cache.match(new Request(url)));
         }
         return backup;
     }
     async updateCaches() {
-        await webApp.clearCaches();
+        await cachesUtils.clearCaches();
         let cache = await caches.open(CACHE_NAME);
-        return cache.addAll(
-            URL_TO_CACHE.map(function (url) {
-                return new Request(url, { cache: 'reload' });
-            })
-        );
+        return cache.addAll(CACHED_URLS.map((url) => new Request(url, { cache: 'reload' })));
     }
-    registerServiceWorker() {
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', function () {
-                navigator.serviceWorker
-                    .register('/service-worker.js')
-                    .then(function (e) {
-                        console.log('Service Worker: success');
-                    })
-                    .catch(function (e) {
-                        console.log('Service Worker: FAILED');
-                    });
-            });
-        }
-    }
-    async unregisterServiceWorkers() {
-        return navigator.serviceWorker.getRegistrations().then(function (serviceWorkers) {
-            return serviceWorkers.map(function (serviceWorker) {
-                return serviceWorker.unregister();
-            });
-        });
-    }
+}
+const cachesUtils = new CachesUtils();
+
+class NotificationUtils {
     requestNotificationPermission() {
         Notification.requestPermission(function (status) {
             console.log('Notification Permission:', status);
@@ -133,42 +82,101 @@ class WebApp {
         }
     }
 }
-const webApp = new WebApp();
+export const notificationUtils = new NotificationUtils();
 
-function main() {
-    WEBAPP_VERSION_ID_TAG.textContent = 'v' + (CLIENT_WEBAPP_VERSION || '0.0.0');
-    // WEBAPP.registerServiceWorker();
-    webApp.unregisterServiceWorkers();
-    webApp.clearCaches();
+class ServiceWorkerUtils {
+    registerServiceWorker(serviceWorkerFile) {
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function () {
+                navigator.serviceWorker
+                    .register(serviceWorkerFile)
+                    .then(function () {
+                        console.log('register service worker: success');
+                    })
+                    .catch(function () {
+                        console.log('register service worker: failed');
+                    });
+            });
+        }
+    }
+    async unregisterServiceWorkers() {
+        return navigator.serviceWorker.getRegistrations().then(function (serviceWorkers) {
+            return serviceWorkers.map(function (serviceWorker) {
+                return serviceWorker.unregister();
+            });
+        });
+    }
+}
+const serviceWorkerUtils = new ServiceWorkerUtils();
+var websocket = null;
 
-    document.getElementById('updateButton').addEventListener('click', async function () {
+class WebSocketClient {
+    async connect(path = 'websocket') {
+        return new Promise(function (resolve, reject) {
+            switch (window.location.protocol) {
+                case 'http:':
+                    websocket = new WebSocket(`ws://${window.location.host}${path}`);
+                    break;
+                case 'https:':
+                    websocket = new WebSocket(`wss://${window.location.host}${path}`);
+                    break;
+            }
+            websocket.onopen = function (e) {
+                terminal.append_response('WebSocket connected 💘');
+                websocket.send(JSON.stringify({ which: 0, auth: getCookie('auth') }));
+                resolve('WebSocket connected 💘');
+            };
+            websocket.onmessage = function (msg) {
+                terminal.append_response_json(JSON.parse(msg.data));
+            };
+            websocket.onclose = webSocketClient.close;
+            websocket.onerror = reject;
+        });
+    }
+    close() {
+        if (websocket) {
+            if (websocket.readyState == WebSocket.OPEN) websocket.close();
+            websocket = null;
+            terminal.append_response('WebSocket closed 😢');
+        }
+    }
+}
+export const webSocketClient = new WebSocketClient();
+
+class App {
+    async update() {
         console.log('updating...');
-        const BACKUP = await webApp.backupCaches();
+        const BACKUP = await cachesUtils.backupCaches();
 
-        webApp
+        cachesUtils
             .updateCaches()
             .then(function () {
                 console.log('update success');
-                WEBAPP_VERSION_ID_TAG.innerText = 'v' + (WEBAPP_NEWEST_VERSION || '0.0.0');
-                localStorageService.set(PREFIX_PWA, 'version', WEBAPP_NEWEST_VERSION);
+                localStorageService.set(LOCALSTORAGE_PREFIX, 'version', APP_NEWEST_VERSION);
             })
             .catch(function () {
                 console.log('update failed');
                 caches.open(CACHE_NAME).then(function (cache) {
-                    for (const url of URL_TO_CACHE) {
+                    for (const url of CACHED_URLS) {
                         cache.put(new Request(url), BACKUP.get(url));
                     }
                 });
             });
-    });
-
-    httpClientService.ajax({ url: '/version.txt', method: 'GET' }, function (data) {
-        if (data) {
-            WEBAPP_NEWEST_VERSION = data;
-        }
-    });
-    httpClientService.ajax({ url: '/worker-config.json', method: 'GET' }, (response) => {
-        if (response) AppConfig.worker_config = response;
-    });
+    }
 }
-main();
+export const app = new App();
+
+if ('serviceWorker' in navigator) {
+    isServiceWorkderAvailable = true;
+}
+if (isServiceWorkderAvailable) {
+    cachesUtils.clearCaches();
+    serviceWorkerUtils.unregisterServiceWorkers();
+}
+
+httpClientService.ajax({ url: '/app.version.txt', method: 'GET' }, function (data) {
+    if (data) APP_NEWEST_VERSION = data;
+});
+httpClientService.ajax({ url: '/worker-config.json', method: 'GET' }, function (response) {
+    if (response) AppConfig.worker_config = response;
+});

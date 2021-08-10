@@ -1,0 +1,193 @@
+::-webkit-scrollbar {
+    width: 3px;
+    height: 3px;
+}
+::-webkit-scrollbar-track {
+    background-color: black;
+}
+::-webkit-scrollbar-thumb {
+    background: red;
+}
+
+.terminal {
+    /* box-shadow: 0 0 10px 1px black; */
+    overflow: visible;
+    background-color: rgb(0, 0, 0);
+    border-radius: 5px;
+    height: fit-content;
+    min-width: 500px;
+    max-width: 1000px;
+}
+
+.terminal * {
+    border-radius: 5px;
+    overflow: visible;
+}
+.terminal .title {
+    padding: 2px 4px;
+    background-color: rgb(255, 255, 255);
+    color: black;
+    box-shadow: 0 0 5px 0 black;
+}
+
+.terminal .screen {
+    height: 50vh;
+    min-height: 200px;
+    max-height: 500px;
+    overflow: auto;
+    padding: 4px;
+    padding-bottom: 0;
+}
+
+.terminal .screen span {
+    display: inline-block;
+}
+.terminal .screen .time {
+    background-color: rgb(255, 255, 255);
+    color: black;
+    padding: 1px 5px;
+}
+
+.terminal .screen .typed,
+.terminal .screen .prompt {
+    color: white;
+    margin: 4px;
+}
+.terminal .screen .typed .content,
+.terminal .screen .prompt .content {
+    background-color: rgb(46, 46, 46);
+    padding: 1px 5px;
+    margin-left: 5px;
+}
+
+.terminal .screen .typed .content {
+    cursor: pointer;
+}
+
+.terminal .screen .prompt .content .yes-no {
+    padding: 2px 8px;
+    cursor: pointer;
+}
+.terminal .screen .prompt .content .yes-no:hover {
+    color: red;
+    background-color: #d6d6d6;
+    box-shadow: 0 0 10px 1px white;
+}
+
+.terminal .screen .response {
+    color: white;
+    margin: 4px;
+    display: flex;
+    justify-content: flex-end;
+}
+.terminal .screen .response .content {
+    /* background-color: rgb(42, 99, 255); */
+    /* background-color: #4A4A4A; */
+    background-color: #1d3c78;
+    padding: 1px 5px;
+    margin: 0 5px 0 0;
+    max-height: 500px;
+    overflow: auto;
+}
+
+.terminal .global {
+    padding: 0 4px;
+    max-width: 100%;
+    min-height: 25px;
+    overflow: auto;
+    /* background-color: transparent; */
+}
+.terminal .global .variable {
+    margin-left: 4px;
+}
+.terminal .global .variable span {
+    background-color: rgb(131, 131, 131);
+    padding: 0 4px;
+    color: black;
+}
+.terminal .global .variable .value {
+    color: cyan;
+    margin-left: 1px;
+}
+
+.terminal .typing {
+    color: rgb(0, 255, 0);
+    padding: 4px;
+    overflow: visible;
+}
+.terminal .typing .inputing {
+    width: 100%;
+    background-color: rgb(46, 46, 46);
+}
+.terminal .typing .inputing .typing-content {
+    outline: none;
+    color: white;
+    border: none;
+    padding: 2px 8px;
+    font: unset;
+    width: calc(100% - 16px);
+    background-color: transparent;
+    z-index: 2;
+}
+.terminal .typing .inputing .comand-preview {
+    left: 4px;
+    padding: 2px 4px;
+    color: rgba(255, 255, 255, 0.5);
+    z-index: 0;
+}
+.terminal .typing .inputing .params-guide {
+    bottom: calc(100% + 4px);
+    padding: 2px 8px;
+    left: 0px;
+    background-color: rgb(46, 46, 46);
+    z-index: 0;
+}
+.terminal .typing .inputing .auto-complete {
+    top: calc(100% + 8px);
+    left: -12px;
+    max-height: 95px;
+    direction: rtl;
+
+    overflow-y: auto;
+    overflow-x: visible;
+    scroll-behavior: smooth;
+    transition: 0.4s;
+
+    padding: 4px;
+    z-index: 0;
+}
+.terminal .typing .inputing .auto-complete .entry {
+    overflow: visible;
+    direction: ltr;
+}
+.terminal .typing .inputing .auto-complete .entry .cursor {
+    /* display: none; */
+    opacity: 0;
+    width: 0;
+    height: 0;
+    margin: 0 5px;
+
+    border-radius: 50%;
+
+    background-color: red;
+    transition: 0.4s;
+}
+.terminal .typing .inputing .auto-complete .entry .value {
+    cursor: pointer;
+    color: black;
+    margin: 3px 0px;
+    box-shadow: 0 0 3px 0 black;
+    padding: 2px 5px;
+    background-color: rgba(44, 44, 44, 0.7);
+}
+.terminal .typing .inputing .auto-complete .entry:hover .cursor,
+.terminal .typing .inputing .auto-complete .entry.selected .cursor {
+    /* display: inline-block; */
+    width: 10px;
+    height: 10px;
+    opacity: 1;
+}
+.terminal .typing .inputing .auto-complete .entry:hover .value,
+.terminal .typing .inputing .auto-complete .entry.selected .value {
+    color: rgb(0, 255, 0);
+}

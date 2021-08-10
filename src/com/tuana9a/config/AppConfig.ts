@@ -6,7 +6,7 @@ var config = {
         port: -1
     },
     path: {
-        webapp_zip: ''
+        resource_dir: ''
     }
 };
 config = JSON.parse(fs.readFileSync('resource/app-config.json', { flag: 'r', encoding: 'utf-8' }));

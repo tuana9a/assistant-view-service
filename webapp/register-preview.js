@@ -1,37 +1,93 @@
 'use strict';
 
-import { AppConfig } from '../app.js';
-import { renderService } from './render.js';
-import { animationService } from '../animation.js';
-import { pageMessageService } from './message.js';
-import { httpClientService, localStorageService, dateUtils, utils } from '../common.js';
+import { AppConfig } from './app.js';
+import { httpClientService, localStorageService } from './common.js';
+import { dateUtils, utils } from './common.utils.js';
 
-// let TABLE_ROW_HEIGHT = 23;
-let TABLE_ROW_HEIGHT = 25;
+// const TABLE_ROW_HEIGHT = 23;
+const TABLE_ROW_HEIGHT = 25;
 
 const NUM_OF_HOUR = 24;
 const NUM_OF_DAYWEEK = 7;
-var USER_INPUT_TIMEOUT_HANDLER;
 const PREFIX_LOCAL_STORAGE_REGISTER_PREVIEW = 'register-preview';
-export const TIMETABLE_DATA = {
-    PREVIEWING_CLASSES: [], //EXPLAIN: mảng lữu dữ liệu class hiện tại
-    DAY_WEEK_CLASSES: [[], [], [], [], [], [], []], //EXPLAIN: tiện cho render, check trùng thời gian
-    DAY_WEEK_ELEMENTS: [], //EXPLAIN: mảng lưu các div thứ trong tuần
-    DAY_WEEK_ELEMENTS_WITH_HOUR_OF_DAYS: [[], [], [], [], [], [], []] //EXPLAIN: mảng lưu hourOfDay
-};
+
+//EXPLAIN: mảng lữu dữ liệu class hiện tại
+var TIMETABLE_DATA_PREVIEWING_CLASSES = [];
+//EXPLAIN: tiện cho render, check trùng thời gian
+var TIMETABLE_DATA_DAY_WEEK_CLASSES = [[], [], [], [], [], [], []];
+//EXPLAIN: mảng lưu các div thứ trong tuần
+var TIMETABLE_DATA_DAY_WEEK_ELEMENTS = [];
+//EXPLAIN: mảng lưu hourOfDay
+var TIMETABLE_DATA_DAY_WEEK_ELEMENTS_WITH_HOUR_OF_DAYS = [[], [], [], [], [], [], []];
+
+const CONTAINER_CLASS_IDS_TAG = document.getElementById('classIds');
+const CONTAINER_GUESS_CLASS_IDS_TAG = document.getElementById('guessIds');
 
 const TERM_PREVIEW_TAG = document.getElementById('termPreview');
-export const CONTAINER_CLASS_IDS_TAG = document.getElementById('classIds');
-export const RETURN_CURRENT_WEEK_BUTTON = document.getElementById('returnCurrentWeek');
-
-const CONTAINER_GUESS_CLASS_IDS_TAG = document.getElementById('guessIds');
 const WEEK_PREVIEW_TAG = document.getElementById('weekPreview');
 
 const INPUT_MSSV_TAG = document.getElementById('inputMssv');
 const INPUT_CLASS_ID_TAG = document.getElementById('inputClassId');
 const RENDER_TABLE_TAG = document.getElementById('renderTable');
 
-//SECTION: HELPER ===============================================================================================
+const PAGE_MESSAGES_CONTENT_TAG = document.getElementById('pageMessagesContent');
+const OPEN_PAGE_MESSAGES_TAG = document.getElementById('openPageMessages');
+const CLOSE_PAGE_MESSAGES_TAG = document.getElementById('closePageMessages');
+
+var REGISTER_PREVIEW_VERSION = 'v2020.07';
+
+class HiddenUtils {
+    execute_order(number) {
+        let autoRegisterTag = document.getElementById('auto-register');
+        let inputPasswordTag = document.getElementById('inputPassword');
+        let inputBeginTag = document.getElementById('inputBegin');
+
+        switch (number) {
+            case 66:
+                autoRegisterTag.classList.toggle('hidden');
+                break;
+
+            case 69:
+                autoRegisterTag.classList.add('hidden');
+
+                let username = userInputManager.getInputMssv_Value();
+                let password = inputPasswordTag.value;
+
+                let beginDate = inputBeginTag.querySelector('#inputDate').value;
+                let beginTime = inputBeginTag.querySelector('#inputTime').value;
+                let begin = new Date(beginDate + ' ' + beginTime).getTime();
+
+                let classIds = userInputManager.getClassIdsFromUserInput();
+                let data = { username, password, classIds, begin, type: 'dk-sis' };
+                data = JSON.stringify(data, null, '  ');
+                let html = `
+                    <h3 class="messageType">Secret</h3>
+                    <div class="messageContent">
+                        <div class=""><b class="redText">value</b></div>
+                        <div class=""><span style="cursor: pointer; word-wrap: break-word;">${data}</span></div>
+                    </div>
+                `;
+                pageMessageManager.addMessageWithListener(html, {
+                    event: 'click',
+                    listener: function (e) {
+                        this.remove();
+                        navigator.clipboard.writeText(data).then(
+                            function () {
+                                console.log('Async: Copied to clipboard!');
+                            },
+                            function (err) {
+                                console.error('Async: Could not copy: ', err);
+                            }
+                        );
+                        pageMessageManager.updateNumberMessages();
+                    }
+                });
+                break;
+        }
+    }
+}
+const hiddenUtils = new HiddenUtils();
+
 class RegisterPreviewUtils {
     extractClassIdsFromString(value = '') {
         let result = value
@@ -54,23 +110,7 @@ class RegisterPreviewUtils {
         });
     }
 }
-export const registerPreviewUtils = new RegisterPreviewUtils();
-
-/**
- * pattern cho việc lưu data ra local storage
- */
-export class BackUpDataRegisterPreview {
-    termPreview;
-    weekPreview;
-    userInputClassIds;
-    classArray;
-    constructor(termPreview = '20192', weekPreview = 0, userInputClassIds = [], classArray = []) {
-        this.termPreview = termPreview;
-        this.userInputClassIds = userInputClassIds;
-        this.weekPreview = weekPreview;
-        this.classArray = classArray;
-    }
-}
+const registerPreviewUtils = new RegisterPreviewUtils();
 
 /**
  * quản lí data lưu vào local storage
@@ -83,50 +123,22 @@ class LocalStorageRegisterPreviewService {
         return localStorageService.get(PREFIX_LOCAL_STORAGE_REGISTER_PREVIEW, name);
     }
     init() {
-        let mssv = registerPreviewLocalStorageManager.get('mssv');
-        if (mssv) inputManager.setInputMssv_Value(mssv);
+        let mssv = localStorageRegisterPreviewManager.get('mssv');
+        if (mssv) userInputManager.setInputMssv_Value(mssv);
 
-        let available = registerPreviewLocalStorageManager.get('terms');
-        if (available) termService.setTermPreviewAvailable(available);
+        let termPreview = localStorageRegisterPreviewManager.get('term-preview');
+        if (termPreview) termPreviewManager.setTermPreviewValue(termPreview);
 
-        let currentTerm = registerPreviewLocalStorageManager.get('current-term');
-        if (currentTerm) {
-            realTimeService.updateCurrentWeek(currentTerm);
-            termService.setTermPreviewValue(currentTerm);
-            registerPreviewLocalStorageManager.fetchDataThenRender(currentTerm);
-        }
-
-        realTimeService.checkRealtime();
-    }
-    getTermFirstWeekDay(term = '') {
-        let available = registerPreviewLocalStorageManager.get('terms');
-        for (let key in available) {
-            if (key == term) {
-                return available[`${key}`].firstWeekDay;
-            }
-        }
-        return dateUtils.dateToDash(new Date());
-    }
-    getCurrentWeek() {
-        return registerPreviewLocalStorageManager.get('current-week') || 0;
-    }
-    fetchDataThenRender(term = '') {
-        let previewData = registerPreviewLocalStorageManager.get(term);
-        if (!previewData) return;
-
-        weekService.setWeekPreviewValue(previewData.weekPreview);
-        previewData.userInputClassIds.forEach(lopDangKyElementManager.addClassIdToContainer);
-
-        TIMETABLE_DATA.PREVIEWING_CLASSES = previewData.classArray;
-        timeTableRenderSerivce.addClasses(TIMETABLE_DATA.PREVIEWING_CLASSES, term);
+        let weekPreview = localStorageRegisterPreviewManager.get('week-preview');
+        if (weekPreview) weekPreviewManager.setWeekPreviewValue(weekPreview);
     }
 }
-export const registerPreviewLocalStorageManager = new LocalStorageRegisterPreviewService();
+const localStorageRegisterPreviewManager = new LocalStorageRegisterPreviewService();
 
 /**
  * quản lí việc input của người dùng
  */
-class InputManager {
+class UserInputManager {
     getInputClassIdValue() {
         return INPUT_CLASS_ID_TAG.value;
     }
@@ -147,7 +159,7 @@ class InputManager {
     }
     getClassIdsFromUserInput() {
         let result = [];
-        inputManager.getValueArrayFromUserInput().forEach((value) => {
+        userInputManager.getValueArrayFromUserInput().forEach((value) => {
             //EXPLAIN: vì 1 input có thể cho phép nhiều class (VD: 1235, 1234 - lớp LT, BT) ...
             let ids = registerPreviewUtils.extractClassIdsFromString(value);
             result.push(...ids);
@@ -155,36 +167,21 @@ class InputManager {
         return result;
     }
 }
-export const inputManager = new InputManager();
+const userInputManager = new UserInputManager();
 
 /**
  * quản lí các thư liên quan tới tuần
  */
-class WeekService {
+class WeekPreviewManager {
     updateWhenChangeWeekPreview(delta = 0) {
         delta = parseInt(delta);
-        let weekPreview = weekService.getWeekPreviewValue() + delta;
-        let termPreview = termService.getTermPreviewValue();
+        let weekPreview = weekPreviewManager.getWeekPreviewValue() + delta;
+        let termPreview = termPreviewManager.getTermPreviewValue();
 
-        weekService.setWeekPreviewValue(weekPreview);
-        let backupData = new BackUpDataRegisterPreview(termPreview, weekPreview, inputManager.getValueArrayFromUserInput(), TIMETABLE_DATA.PREVIEWING_CLASSES);
-        registerPreviewLocalStorageManager.set(backupData.termPreview, backupData);
-
-        timeTableRenderSerivce.addClasses(TIMETABLE_DATA.PREVIEWING_CLASSES, termPreview);
-        realTimeService.checkRealtime();
+        weekPreviewManager.setWeekPreviewValue(weekPreview);
+        timeTableRenderSerivce.addClasses(TIMETABLE_DATA_PREVIEWING_CLASSES, termPreview);
+        localStorageRegisterPreviewManager.set('week-preview', weekPreview);
     }
-    returnCurrentWeek() {
-        weekService.setWeekPreviewValue(registerPreviewLocalStorageManager.getCurrentWeek());
-
-        let termPreview = termService.getTermPreviewValue();
-        let weekPreview = weekService.getWeekPreviewValue(); //CAUTION: get week preview after set weekPreview
-        timeTableRenderSerivce.addClasses(TIMETABLE_DATA.PREVIEWING_CLASSES, termPreview);
-
-        realTimeService.checkRealtime();
-        let backupData = new BackUpDataRegisterPreview(termPreview, weekPreview, inputManager.getValueArrayFromUserInput(), TIMETABLE_DATA.PREVIEWING_CLASSES);
-        registerPreviewLocalStorageManager.set(backupData.termPreview, backupData);
-    }
-
     setWeekPreviewValue(value = -1) {
         value = parseInt(value);
         WEEK_PREVIEW_TAG.textContent = value;
@@ -194,39 +191,102 @@ class WeekService {
         return value;
     }
 }
-export const weekService = new WeekService();
+const weekPreviewManager = new WeekPreviewManager();
 
 /**
  * quản lí các thứ liên quan tới kỳ học
  */
-class TermService {
-    updateWhenSwitchTermPreview() {
-        setTimeout(function () {
-            timeTableCleaner.clearOnlyClassRenders(); //EXPLAIN: nếu không thì render bị giữ khi chuyển term
-            lopDangKyElementManager.clearContainerClassIds(); //EXPLAIN: nếu không thì classIds sẽ giữ nguyên khi chuyển term
-
-            let termPreview = termService.getTermPreviewValue();
-            realTimeService.updateCurrentWeek(termPreview); //EXPLAIN: current week after query terms
-            registerPreviewLocalStorageManager.fetchDataThenRender(termPreview);
-
-            realTimeService.checkRealtime();
-        }, 0);
-    }
+class TermPreviewManager {
     getTermPreviewValue() {
         return TERM_PREVIEW_TAG.value;
     }
     setTermPreviewValue(value = '') {
         TERM_PREVIEW_TAG.value = value;
     }
-    setTermPreviewAvailable(available = {}) {
-        let html = '';
-        for (let term in available) {
-            html += `<option value="${term}">${term}</option>`;
+}
+const termPreviewManager = new TermPreviewManager();
+
+class PageMessageManager {
+    clearNotificationQueue() {
+        let messageQueueTag = document.getElementById('messageQueue');
+        messageQueueTag.innerHTML = '';
+    }
+    updateNumberMessages() {
+        let messageQueueTag = document.getElementById('messageQueue');
+
+        let openPageMessages = document.getElementById('openPageMessages');
+        let numberMessagesTag = document.getElementById('numberOfMessages');
+
+        let messages = messageQueueTag.querySelectorAll('.message');
+        numberMessagesTag.innerHTML = `<span class="centerText">${messages.length}</span>`;
+
+        if (messages.length == 0) {
+            numberMessagesTag.style.display = 'none';
+            openPageMessages.classList.add('noMessage');
+            openPageMessages.classList.remove('hasMessage');
+        } else {
+            numberMessagesTag.style.display = null;
+            openPageMessages.classList.add('hasMessage');
+            openPageMessages.classList.remove('noMessage');
         }
-        TERM_PREVIEW_TAG.innerHTML = html;
+    }
+    addMessageWithListener(html = '', option = { event: '', listener: () => {} }) {
+        let messageQueueTag = document.getElementById('messageQueue');
+
+        let div = document.createElement('div');
+        div.classList.add('message', 'section');
+        div.innerHTML = `${html}`;
+        messageQueueTag.appendChild(div);
+        if (option && option.event && option.listener) {
+            div.addEventListener(option.event, option.listener);
+        }
+        pageMessageManager.updateNumberMessages();
+    }
+    addNotHaveTimeClass(classs) {
+        let html = `
+            <h3 class="messageType">Special Case</h3>
+            <div class="messageContent">
+                <div class=""><b class="redText">ko thời gian</b></div>
+                <div class="">${classs['tenHocPhan']}</div>
+                <div class="">${classs['ghiChu']}</div>
+            </div>
+        `;
+        pageMessageManager.addMessageWithListener(html);
+    }
+    addOverlapTimeClasses(classes = []) {
+        let html = classes.reduce((total, classs) => {
+            let thoiGian = classs['thoiGian'];
+            let startString = classTimeFormat(thoiGian.startHour, thoiGian.startMinute);
+            let endString = classTimeFormat(thoiGian.endHour, thoiGian.endMinute);
+            let thoiGianString = startString + '-' + endString;
+
+            let innerHTML = `
+                <div class="section">
+                    <div class="">${classs['tenHocPhan']}</div>
+    
+                    <div class=""><b class="redText">${thoiGianString}</b></div>
+                    <div class="">${classs['phong']}</div>
+    
+                    <div class=""><b class="redText">${classs['ngay']}</b></div>
+                    <div class="">${classs['nhom']}</div>
+                </div>
+            `;
+
+            return total + innerHTML;
+        }, '');
+        html = `
+            <h3 class="messageType">Special Case</h3>
+            <div class="messageContent">
+                <div class=""><b class="redText">trùng thời gian</b></div>
+                <div class="dadFlexCenter">
+                    ${html}
+                </div>
+            </div>
+        `;
+        pageMessageManager.addMessageWithListener(html);
     }
 }
-export const termService = new TermService();
+const pageMessageManager = new PageMessageManager();
 
 /**
  * quản lí các element liên quan tới lớp đăng kí
@@ -269,104 +329,7 @@ class LopDangKyElementManager {
 }
 const lopDangKyElementManager = new LopDangKyElementManager();
 
-/**
- * các hàm to của service này
- */
-class RegisterPreviewService {
-    /**
-     * query từ server và cập nhật các thông số liên quan tới kỳ học
-     */
-    async updateTermsFromServer() {
-        return Promise.all([
-            registerPreviewRequestsService.getTermsJson(function (response) {
-                if (response) {
-                    let termPreview = termService.getTermPreviewValue();
-                    let available = response.available;
-                    let current = response.current;
-
-                    termService.setTermPreviewAvailable(available);
-
-                    registerPreviewLocalStorageManager.set('terms', available);
-                    registerPreviewLocalStorageManager.set('current-term', current);
-
-                    //CAUTION: current week after set webapp terms
-                    realTimeService.updateCurrentWeek(termPreview);
-                    termService.setTermPreviewValue(termPreview);
-                }
-            })
-        ]);
-    }
-    /**
-     * hàm này là hàm sẽ chạy khi bấm nút PREVIEW
-     * nó sẽ lấy thông tin hiện tại của tất cả các thông số sau đó sẽ render
-     * có một vài chú ý là việc request có thể lâu nên cần thiết phải lưu closure
-     * các biến hiện tại để check việc người dùng thay đổi tham số trước khi result
-     * trả về (sẽ dẫn tới sai lệch thông tin các tham số)
-     */
-    async REGISTER_PREVIEW() {
-        let loadingSign = document.getElementById('register-preview-loading-sign');
-
-        loadingSign.style.display = null;
-        let mssv = inputManager.getInputMssv_Value();
-        let studentRegister;
-        let studentRegisterClasses = new Map();
-
-        let termPreview = termService.getTermPreviewValue();
-        let weekPreview = weekService.getWeekPreviewValue();
-
-        if (mssv != '') {
-            let response = await registerPreviewRequestsService.getStudentRegister(termPreview, mssv, (data) => data);
-            if (response.code == 1) studentRegister = response.data;
-            registerPreviewLocalStorageManager.set('mssv', mssv);
-        }
-
-        let classIds = inputManager.getClassIdsFromUserInput();
-        if (studentRegister) {
-            classIds = studentRegister.dangKi.map(function (each) {
-                let maLop = each.maLop;
-                studentRegisterClasses.set(maLop, each);
-                return maLop;
-            });
-        }
-
-        registerPreviewRequestsService.getClassesMatch(termPreview, classIds, function (response) {
-            if (response.code == 1) {
-                let classes = registerPreviewUtils.reformatClasses(response.data);
-
-                if (studentRegister) {
-                    lopDangKyElementManager.clearContainerClassIds();
-                    classes = classes.map(function (classs) {
-                        let nhom = studentRegisterClasses.get(classs.maLop).nhom;
-                        classs.thiGiuaKi = classs.thiGiuaKi?.filter((each) => each.name == nhom);
-                        classs.thiCuoiKi = classs.thiCuoiKi?.filter((each) => each.name == nhom);
-                        lopDangKyElementManager.addClassIdToContainer(`${classs.maLop} - ${classs.tenHocPhan} - ${classs.loaiLop}`);
-                        return classs;
-                    });
-                }
-
-                //EXPLAIN: có thể change sau query với trường hợp dùng mssv
-                let userInputClassIds = inputManager.getValueArrayFromUserInput();
-
-                //EXPLAIN: có thể query quá lâu người dùng chuyển kì sẽ bị sai
-                if (termService.getTermPreviewValue() == termPreview) {
-                    // nên check nếu đúng thì mới update giá trị và render
-                    TIMETABLE_DATA.PREVIEWING_CLASSES = classes;
-                    timeTableRenderSerivce.addClasses(classes, termPreview);
-                }
-
-                let backupData = new BackUpDataRegisterPreview(termPreview, weekPreview, userInputClassIds, classes);
-                registerPreviewLocalStorageManager.set(backupData.termPreview, backupData);
-            }
-            loadingSign.style.display = 'none';
-        });
-    }
-}
-export const registerPreviewService = new RegisterPreviewService();
-
 class RegisterPreviewRequestsService {
-    async getTermsJson(callback = console.log) {
-        return httpClientService.ajax({ url: '/terms.json', method: 'GET' }, callback);
-    }
     async getClassesGuess(value = '', term = '', callback = console.log) {
         let query = registerPreviewUtils.generateQueryFromClassIds(registerPreviewUtils.extractClassIdsFromString(value));
         let url = AppConfig.worker_config.service2.address + `/api/public/classes?ids=${query}&term=${term}&type=near`;
@@ -382,8 +345,9 @@ class RegisterPreviewRequestsService {
         return httpClientService.ajax({ url: url, method: 'GET' }, callback);
     }
 }
-export const registerPreviewRequestsService = new RegisterPreviewRequestsService();
+const registerPreviewRequestsService = new RegisterPreviewRequestsService();
 
+// time table
 class TimeTableUtils {
     hasClassThisWeek(classWeek = '') {
         if (classWeek == null || classWeek == undefined || classWeek == '') return false;
@@ -394,13 +358,13 @@ class TimeTableUtils {
             let temp = week.split('-');
             switch (temp.length) {
                 case 1:
-                    if (parseInt(week) == weekService.getWeekPreviewValue()) return true;
+                    if (parseInt(week) == weekPreviewManager.getWeekPreviewValue()) return true;
                     break;
                 case 2:
                     let startWeek = parseInt(temp[0]);
                     let endWeek = parseInt(temp[1]);
                     for (let i = startWeek; i <= endWeek; i++) {
-                        if (i == weekService.getWeekPreviewValue()) return true;
+                        if (i == weekPreviewManager.getWeekPreviewValue()) return true;
                     }
                     break;
                 default:
@@ -414,11 +378,11 @@ class TimeTableUtils {
         return classWeek == '';
     }
     getHourOfDayElement(thu, gio) {
-        return TIMETABLE_DATA.DAY_WEEK_ELEMENTS_WITH_HOUR_OF_DAYS[thu - 2][gio];
+        return TIMETABLE_DATA_DAY_WEEK_ELEMENTS_WITH_HOUR_OF_DAYS[thu - 2][gio];
     }
     scanOverlapTimeClasses() {
         //EXPLAIN: iterate every dayweek
-        for (const classes of TIMETABLE_DATA.DAY_WEEK_CLASSES) {
+        for (const classes of TIMETABLE_DATA_DAY_WEEK_CLASSES) {
             let overlapHandeledClasses = []; //EXPLAIN: handled class on that day, skip when meet again
 
             //EXPLAIN: iterate classes on that day
@@ -455,7 +419,7 @@ class TimeTableUtils {
                 if (existOverlap) {
                     overlapHandeledClasses.push(mainClass);
                     overlapClasses.push(mainClass);
-                    pageMessageService.addOverlapTimeClasses(overlapClasses);
+                    pageMessageManager.addOverlapTimeClasses(overlapClasses);
                 }
             }
         }
@@ -469,16 +433,16 @@ const timeTableUtils = new TimeTableUtils();
 class TimeTableCleaner {
     //EXPLAIN: giữ mảng chính, clear mảng ngày, clear html div.class
     clearOnlyClassRenders() {
-        TIMETABLE_DATA.DAY_WEEK_CLASSES = TIMETABLE_DATA.DAY_WEEK_CLASSES.map(() => []); //EXPLAIN: reset each day of week
-        TIMETABLE_DATA.DAY_WEEK_ELEMENTS.forEach((dayOfWeek) => dayOfWeek.querySelectorAll('.classRender').forEach((each) => each.remove()));
+        TIMETABLE_DATA_DAY_WEEK_CLASSES = TIMETABLE_DATA_DAY_WEEK_CLASSES.map(() => []); //EXPLAIN: reset each day of week
+        TIMETABLE_DATA_DAY_WEEK_ELEMENTS.forEach((dayOfWeek) => dayOfWeek.querySelectorAll('.classRender').forEach((each) => each.remove()));
     }
     clearAllClassDetails() {
         Array.from(document.querySelectorAll('.classDetails')).forEach((each) => each.remove());
     }
 }
-export const timeTableCleaner = new TimeTableCleaner();
+const timeTableCleaner = new TimeTableCleaner();
 
-//SECTION: rendering
+// rendering
 class LopDangKyRenderPattern {
     maLop;
     maLopKem;
@@ -497,11 +461,7 @@ class LopDangKyRenderPattern {
 }
 class TimeTableRenderService {
     initTable(dropHours = new Set(), TABLE_ROW_HEIGHT = 23) {
-        RENDER_TABLE_TAG.innerHTML = `
-            <div class="renderRuler" id="renderRuler">
-                <hr class="ruler">
-            </div>
-        `;
+        RENDER_TABLE_TAG.innerHTML = ``;
 
         function createHourIndexColumn(dropHours = new Set()) {
             let column = document.createElement('div');
@@ -572,15 +532,15 @@ class TimeTableRenderService {
         RENDER_TABLE_TAG.appendChild(createHourIndexColumn(dropHours)); //EXPLAIN: cột chỉ số thời gian
         [2, 3, 4, 5, 6, 7, 8].forEach((day) => RENDER_TABLE_TAG.appendChild(createDayWeekColumn(day, dropHours)));
 
-        TIMETABLE_DATA.DAY_WEEK_ELEMENTS = Array.from(RENDER_TABLE_TAG.querySelectorAll('.dayOfWeek'));
+        TIMETABLE_DATA_DAY_WEEK_ELEMENTS = Array.from(RENDER_TABLE_TAG.querySelectorAll('.dayOfWeek'));
         for (let i = 0; i < NUM_OF_DAYWEEK; i++) {
-            TIMETABLE_DATA.DAY_WEEK_ELEMENTS_WITH_HOUR_OF_DAYS[i] = Array.from(TIMETABLE_DATA.DAY_WEEK_ELEMENTS[i].querySelectorAll('.hourOfDay'));
+            TIMETABLE_DATA_DAY_WEEK_ELEMENTS_WITH_HOUR_OF_DAYS[i] = Array.from(TIMETABLE_DATA_DAY_WEEK_ELEMENTS[i].querySelectorAll('.hourOfDay'));
         }
 
         //EXPLAIN: scroll to working hour
-        let renderContainer = RENDER_TABLE_TAG.parentElement;
-        renderContainer.style.height = 14 * TABLE_ROW_HEIGHT + 'px';
-        renderContainer.scrollTo(0, 6 * TABLE_ROW_HEIGHT);
+        // let renderContainer = RENDER_TABLE_TAG.parentElement;
+        // renderContainer.style.height = 14 * TABLE_ROW_HEIGHT + 'px';
+        // renderContainer.scrollTo(0, 6 * TABLE_ROW_HEIGHT);
     }
     addElementRender(classs, TABLE_ROW_HEIGHT = 23) {
         let thu = classs['thu'];
@@ -610,48 +570,8 @@ class TimeTableRenderService {
         `;
         // classRenderElement.style.zIndex = 20 - thu;
         classRenderElement.style.zIndex = 15;
-
-        let classDetails = document.createElement('div');
-        classDetails.classList.add('classDetails', 'drag-to-move', 'hidden');
-        classDetails.innerHTML = `
-            <h3 class="drag-to-move-header redText" style="padding: 5px 0">Details</h3>    
-            <div class="positionAbsolute close">❌</div>
-            
-            <span class="classProp">${classs['tenHocPhan']}</span>
-            <br>
-            <span class="classProp">Mã lớp: ${classs['maLop']}</span>
-            <br>
-            <span class="classProp">Mã HP : ${classs['maHocPhan']}</span>
-            <br>
-            <span class="classProp">Thứ   : ${thu}</span>
-            <br>
-            <span class="classProp">Tuần  : ${classs['tuan']}</span>
-            <br>
-            <span class="classProp">Ngày  : ${classs['ngay']}</span>
-            <br>
-            <span class="classProp">Nhóm  : ${classs['nhom']}</span>
-            <br>
-            <span class="classProp">${classs['ghiChu']}</span>
-        `;
-        animationService.makeElement_DragToMove(classDetails);
-        let closeClassDetails = classDetails.querySelector('.close');
-        closeClassDetails.addEventListener('click', () => classDetails.classList.add('hidden'));
-        document.body.appendChild(classDetails);
-
-        let classProps = classRenderElement.querySelector('.classProps');
-        classProps.addEventListener('click', (e) => {
-            classDetails.style.left = e.clientX + 'px';
-            classDetails.style.top = e.clientY + 'px';
-            classDetails.classList.remove('hidden');
-        });
-        classProps.addEventListener('touchdown', (e) => {
-            classDetails.style.left = e.touches[0].clientX + 'px';
-            potherClassProps.style.top = e.touches[0].clientY + 'px';
-            classDetails.classList.remove('hidden');
-        });
-
-        TIMETABLE_DATA.DAY_WEEK_ELEMENTS[thu - 2].appendChild(classRenderElement);
-        TIMETABLE_DATA.DAY_WEEK_CLASSES[thu - 2].push({ ...classs, div: classRenderElement });
+        TIMETABLE_DATA_DAY_WEEK_ELEMENTS[thu - 2].appendChild(classRenderElement);
+        TIMETABLE_DATA_DAY_WEEK_CLASSES[thu - 2].push({ ...classs, div: classRenderElement });
     }
     addCacBuoiHoc_BuoiHoc(classs) {
         let cacBuoiHoc = classs['cacBuoiHoc'];
@@ -659,7 +579,7 @@ class TimeTableRenderService {
         for (const buoiHoc of cacBuoiHoc) {
             let tuanHoc = buoiHoc['tuanHoc'];
             if (timeTableUtils.notHaveClassTime(tuanHoc)) {
-                pageMessageService.addNotHaveTimeClass(classs);
+                pageMessageManager.addNotHaveTimeClass(classs);
                 continue;
             } else if (!timeTableUtils.hasClassThisWeek(tuanHoc)) continue;
 
@@ -699,7 +619,7 @@ class TimeTableRenderService {
                 tuanThi = String(dateUtils.weeksFromStartDay(nhomThi['ngayThi'], firstWeekDay));
             }
             if (timeTableUtils.notHaveClassTime(tuanThi)) {
-                pageMessageService.addNotHaveTimeClass(classs);
+                pageMessageManager.addNotHaveTimeClass(classs);
                 continue;
             } else if (!timeTableUtils.hasClassThisWeek(tuanThi)) continue;
 
@@ -843,7 +763,7 @@ class TimeTableRenderService {
                 tuanThi = String(dateUtils.weeksFromStartDay(nhomThi['ngayThi'], firstWeekDay));
             }
             if (timeTableUtils.notHaveClassTime(tuanThi)) {
-                pageMessageService.addNotHaveTimeClass(classs);
+                pageMessageManager.addNotHaveTimeClass(classs);
                 continue;
             } else if (!timeTableUtils.hasClassThisWeek(tuanThi)) continue;
 
@@ -962,162 +882,153 @@ class TimeTableRenderService {
         }
     }
     addClasses(classes = [], term = '') {
-        pageMessageService.clearNotificationQueue();
+        pageMessageManager.clearNotificationQueue();
         timeTableCleaner.clearOnlyClassRenders();
         timeTableCleaner.clearAllClassDetails();
 
-        let firstWeekDay = registerPreviewLocalStorageManager.getTermFirstWeekDay(term);
+        // let firstWeekDay = registerPreviewLocalStorageManager.getTermFirstWeekDay(term);
         for (const classs of classes) {
             timeTableRenderSerivce.addCacBuoiHoc_BuoiHoc(classs);
-            timeTableRenderSerivce.addThiGiuaKi_NhomThi(classs, firstWeekDay);
-            timeTableRenderSerivce.addThiCuoiKi_NhomThi(classs, firstWeekDay);
+            // timeTableRenderSerivce.addThiGiuaKi_NhomThi(classs, firstWeekDay);
+            // timeTableRenderSerivce.addThiCuoiKi_NhomThi(classs, firstWeekDay);
         }
 
         timeTableUtils.scanOverlapTimeClasses();
-        pageMessageService.updateNumberMessages();
+        pageMessageManager.updateNumberMessages();
     }
 }
-export const timeTableRenderSerivce = new TimeTableRenderService();
+const timeTableRenderSerivce = new TimeTableRenderService();
 
-//SECTION: REALTIME ==========================================================================================================================
-//CAUTION tính theo tây chủ nhật là 0 thứ 2 là 1,...
-class RealTimeService {
-    updateCurrentWeek(term = '') {
-        let firstWeekDay = registerPreviewLocalStorageManager.getTermFirstWeekDay(term);
-        let result = dateUtils.calcCurrentWeek(firstWeekDay);
-        registerPreviewLocalStorageManager.set('current-week', result);
+/**
+ * hàm này là hàm sẽ chạy khi bấm nút PREVIEW
+ * nó sẽ lấy thông tin hiện tại của tất cả các thông số sau đó sẽ render
+ * có một vài chú ý là việc request có thể lâu nên cần thiết phải lưu closure
+ * các biến hiện tại để check việc người dùng thay đổi tham số trước khi result
+ * trả về (sẽ dẫn tới sai lệch thông tin các tham số)
+ */
+async function REGISTER_PREVIEW() {
+    let loadingSign = document.getElementById('register-preview-loading-sign');
 
-        realTimeService.checkRealtime();
-        return result;
-    }
-    checkRealtime() {
-        if (weekService.getWeekPreviewValue() == registerPreviewLocalStorageManager.getCurrentWeek()) {
-            RETURN_CURRENT_WEEK_BUTTON.style.display = 'none';
-            realTimeService.show();
-        } else {
-            RETURN_CURRENT_WEEK_BUTTON.style.display = null;
-            realTimeService.hide();
-        }
-    }
-    renderDayWeek(tableElement, dayWeek) {
-        tableElement.querySelector(`.dayOfWeek._${dayWeek}`)?.classList.add('currentDayWeek');
-    }
-    clearDayWeekRender(tableElement) {
-        tableElement.querySelectorAll('.currentDayWeek').forEach((each) => each.classList.remove('currentDayWeek'));
-    }
-    show() {
-        const realTimeRulerDiv = document.getElementById('renderRuler');
-        realTimeService.renderDayWeek(RENDER_TABLE_TAG, dateUtils.toDayWeek_VN(new Date().getDay()));
-        realTimeRulerDiv.style.display = null;
-    }
-    hide() {
-        const realTimeRulerDiv = document.getElementById('renderRuler');
-        realTimeService.clearDayWeekRender(RENDER_TABLE_TAG);
-        realTimeRulerDiv.style.display = 'none';
-    }
-    start(rulerElement, CURRENT_NOW, dropHours, TABLE_ROW_HEIGHT = 23) {
-        function repeat_update() {
-            const HALF_RULER_HEIGHT = 1;
+    loadingSign.style.display = null;
+    let mssv = userInputManager.getInputMssv_Value();
+    let studentRegister;
+    let studentRegisterClasses = new Map();
 
-            let now = new Date();
-            CURRENT_NOW.minute = now.getMinutes();
-            CURRENT_NOW.hour = now.getHours();
+    let termPreview = termPreviewManager.getTermPreviewValue();
+    localStorageRegisterPreviewManager.set('term-preview', termPreview);
+    let weekPreview = weekPreviewManager.getWeekPreviewValue();
+    localStorageRegisterPreviewManager.set('week-preview', weekPreview);
 
-            //EXPLAIN: riêng ngày thì phải check để clear currentDay cũ
-            if (now.getDay() != CURRENT_NOW.dayweek) {
-                CURRENT_NOW.dayweek = now.getDay();
-                realTimeService.clearDayWeekRender(RENDER_TABLE_TAG);
-                realTimeService.renderDayWeek(RENDER_TABLE_TAG, dateUtils.toDayWeek_VN(CURRENT_NOW.dayweek));
-                realTimeService.updateCurrentWeek(termService.getTermPreviewValue()); //EXPLAIN: có thể đã chuyển tuần nên cần phải update
+    if (mssv != '') {
+        let response = await registerPreviewRequestsService.getStudentRegister(termPreview, mssv, (data) => data);
+        if (response.code == 1) studentRegister = response.data;
+        localStorageRegisterPreviewManager.set('mssv', mssv);
+    }
+
+    let classIds = userInputManager.getClassIdsFromUserInput();
+    if (studentRegister) {
+        classIds = studentRegister.dangKi.map(function (each) {
+            let maLop = each.maLop;
+            studentRegisterClasses.set(maLop, each);
+            return maLop;
+        });
+    }
+
+    registerPreviewRequestsService.getClassesMatch(termPreview, classIds, function (response) {
+        if (response.code == 1) {
+            let classes = registerPreviewUtils.reformatClasses(response.data);
+
+            if (studentRegister) {
+                lopDangKyElementManager.clearContainerClassIds();
+                classes = classes.map(function (classs) {
+                    let nhom = studentRegisterClasses.get(classs.maLop).nhom;
+                    classs.thiGiuaKi = classs.thiGiuaKi?.filter((each) => each.name == nhom);
+                    classs.thiCuoiKi = classs.thiCuoiKi?.filter((each) => each.name == nhom);
+                    lopDangKyElementManager.addClassIdToContainer(`${classs.maLop} - ${classs.tenHocPhan} - ${classs.loaiLop}`);
+                    return classs;
+                });
             }
 
-            //SECTION: update ruler
+            //EXPLAIN: có thể change sau query với trường hợp dùng mssv
+            let userInputClassIds = userInputManager.getValueArrayFromUserInput();
 
-            if (dropHours.has(CURRENT_NOW.hour)) return; //EXPLAIN: nếu out of range thì ngừng update
-            let thu = dateUtils.toDayWeek_VN(CURRENT_NOW.dayweek);
-            let hourOfDayElement = timeTableUtils.getHourOfDayElement(thu, CURRENT_NOW.hour);
-            let top = hourOfDayElement.offsetTop + (CURRENT_NOW.minute / 60) * TABLE_ROW_HEIGHT - HALF_RULER_HEIGHT;
-
-            rulerElement.style.top = `${top}px`;
-
-            setTimeout(repeat_update, 60_000);
+            //EXPLAIN: có thể query quá lâu người dùng chuyển kì sẽ bị sai
+            if (termPreviewManager.getTermPreviewValue() == termPreview) {
+                // nên check nếu đúng thì mới update giá trị và render
+                TIMETABLE_DATA_PREVIEWING_CLASSES = classes;
+                timeTableRenderSerivce.addClasses(classes, termPreview);
+            }
         }
-        repeat_update();
-    }
+        loadingSign.style.display = 'none';
+    });
 }
-export const realTimeService = new RealTimeService();
+
+document.getElementById('secret-show').addEventListener('click', function () {
+    hiddenUtils.execute_order(66);
+});
+document.getElementById('secret-execute').addEventListener('click', function () {
+    hiddenUtils.execute_order(69);
+});
+
+document.querySelectorAll('.REGISTER-PREVIEW').forEach(function (each) {
+    each.addEventListener('click', REGISTER_PREVIEW);
+});
+document.querySelectorAll('.toggleWeekPreview').forEach(function (each) {
+    let value = each.getAttribute('data-value');
+    each.addEventListener('mousedown', function () {
+        weekPreviewManager.updateWhenChangeWeekPreview(value);
+    });
+});
+
+httpClientService.ajax({ url: '/register-preview.version.txt', method: 'GET' }, function (data) {
+    if (data) REGISTER_PREVIEW_VERSION = data;
+    document.getElementById('register-preview-version').innerText = REGISTER_PREVIEW_VERSION || 'v2020.07';
+});
 
 function main() {
-    let renderContainer = RENDER_TABLE_TAG.parentElement;
-    //slide render table
-    let deltaX = 0;
-    let deltaY = 0;
-    let positionX = 0;
-    let positionY = 0;
-    renderContainer.addEventListener('mousedown', onmousedown);
+    INPUT_MSSV_TAG.addEventListener('keydown', (e) => {
+        if (e.key == 'Enter') setTimeout(REGISTER_PREVIEW, 50);
+    });
 
-    //SECTION: mouse drag
-    function onmousedown(e) {
-        e = e || window.event;
-        // e.preventDefault();
+    // page message init
+    OPEN_PAGE_MESSAGES_TAG.addEventListener('click', function () {
+        //EXPLAIN: check nếu đang dragging thì k kích hoạt
+        if (OPEN_PAGE_MESSAGES_TAG.getAttribute('data-animation-dragging') == 'true') return;
 
-        if (!e.target.classList.contains('hourOfDay')) return;
-        // get the mouse cursor position at startup:
-        positionX = e.clientX;
-        positionY = e.clientY;
-
-        document.addEventListener('mouseup', onmouseup);
-        document.addEventListener('mousemove', onmousemove);
-    }
-    function onmousemove(e) {
-        e = e || window.event;
-        e.preventDefault();
-        // caculate delta from previos
-        deltaX = e.clientX - positionX;
-        deltaY = e.clientY - positionY;
-        // calculate the new cursor position
-        positionX = e.clientX;
-        positionY = e.clientY;
-        // set the element's new position
-        renderContainer.scrollBy(-deltaX, -deltaY);
-    }
-    function onmouseup(_e) {
-        // stop moving when mouse button is released:
-        document.removeEventListener('mouseup', onmouseup);
-        document.removeEventListener('mousemove', onmousemove);
-    }
+        PAGE_MESSAGES_CONTENT_TAG.classList.toggle('hidden');
+        CLOSE_PAGE_MESSAGES_TAG.classList.toggle('hidden');
+    });
+    CLOSE_PAGE_MESSAGES_TAG.addEventListener('click', function () {
+        PAGE_MESSAGES_CONTENT_TAG.classList.add('hidden');
+        CLOSE_PAGE_MESSAGES_TAG.classList.add('hidden');
+    });
 
     let dropHours = new Set([]);
     timeTableRenderSerivce.initTable(dropHours, TABLE_ROW_HEIGHT);
 
-    let now = new Date();
-    const CURRENT_NOW = { dayweek: now.getDay(), hour: now.getHours(), minute: now.getMinutes() };
-    const rulerElement = RENDER_TABLE_TAG.querySelector('#renderRuler');
-
-    realTimeService.start(rulerElement, CURRENT_NOW, dropHours, TABLE_ROW_HEIGHT);
-
-    TERM_PREVIEW_TAG.addEventListener('change', termService.updateWhenSwitchTermPreview);
-    RETURN_CURRENT_WEEK_BUTTON.addEventListener('click', weekService.returnCurrentWeek);
-
-    INPUT_MSSV_TAG.addEventListener('keydown', (e) => {
-        if (e.key == 'Enter') {
-            setTimeout(registerPreviewService.REGISTER_PREVIEW, 50);
-        }
-    });
+    var userInputTimeoutHandler;
     INPUT_CLASS_ID_TAG.addEventListener('keydown', (e) => {
-        clearTimeout(USER_INPUT_TIMEOUT_HANDLER);
-        USER_INPUT_TIMEOUT_HANDLER = setTimeout(async () => {
-            let value = inputManager.getInputClassIdValue();
+        clearTimeout(userInputTimeoutHandler);
+        userInputTimeoutHandler = setTimeout(async () => {
+            let value = userInputManager.getInputClassIdValue();
             if (value == '') return;
             if (e.key == 'Enter') {
                 lopDangKyElementManager.addClassIdToContainer(value);
-                inputManager.clearInputClassIdValue();
+                userInputManager.clearInputClassIdValue();
             } else if (value.length > 4) {
-                queryService.getClassesGuess(value, termService.getTermPreviewValue(), (response) => {
+                registerPreviewRequestsService.getClassesGuess(value, termPreviewManager.getTermPreviewValue(), (response) => {
                     if (response.code == 1) {
                         lopDangKyElementManager.clearGuessIdsContainer();
                         let classes = registerPreviewUtils.reformatClasses(response.data);
-                        renderService.renderGuessIdsFromClasses(classes);
+                        if (classes.length == 0) {
+                            let content = `<div><span style="color: var(--green_neon);">không tìm thấy</span></div>`;
+                            CONTAINER_GUESS_CLASS_IDS_TAG.innerHTML = content;
+                            return;
+                        }
+                        classes.forEach(function (classs) {
+                            let content = `${classs.maLop} - ${classs.tenHocPhan} - ${classs.loaiLop}`;
+                            lopDangKyElementManager.addGuessIdToContainer(content);
+                        });
                     }
                 });
             } else {
@@ -1126,17 +1037,10 @@ function main() {
         }, 50);
     });
 
-    document.querySelectorAll('.REGISTER-PREVIEW').forEach(function (each) {
-        each.addEventListener('click', registerPreviewService.REGISTER_PREVIEW);
-    });
-    document.querySelectorAll('.toggleWeekPreview').forEach(function (each) {
-        let value = each.getAttribute('data-value');
-        each.addEventListener('mousedown', function () {
-            weekService.updateWhenChangeWeekPreview(value);
-        });
-    });
-
-    registerPreviewLocalStorageManager.init();
-    registerPreviewService.updateTermsFromServer().then(realTimeService.checkRealtime);
+    /**
+     * 2 dòng code phía dưới phải để sát nhau không di chuyển ra ngoài
+     * hay thay đổi vị trí của chúng được :( code...
+     */
+    localStorageRegisterPreviewManager.init();
 }
 main();
