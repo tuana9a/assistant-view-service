@@ -30,6 +30,10 @@ class Utils {
         }
         return false;
     }
+    fromAnyToNumber(input = {}) {
+        let value = parseInt(input);
+        return value ? value : 0;
+    }
 }
 export const utils = new Utils();
 

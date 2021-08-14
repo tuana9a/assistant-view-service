@@ -48,13 +48,11 @@
     padding: 1px 5px;
 }
 
-.terminal .screen .typed,
-.terminal .screen .prompt {
+.terminal .screen .typed {
     color: white;
     margin: 4px;
 }
-.terminal .screen .typed .content,
-.terminal .screen .prompt .content {
+.terminal .screen .typed .content {
     background-color: rgb(46, 46, 46);
     padding: 1px 5px;
     margin-left: 5px;
@@ -62,16 +60,6 @@
 
 .terminal .screen .typed .content {
     cursor: pointer;
-}
-
-.terminal .screen .prompt .content .yes-no {
-    padding: 2px 8px;
-    cursor: pointer;
-}
-.terminal .screen .prompt .content .yes-no:hover {
-    color: red;
-    background-color: #d6d6d6;
-    box-shadow: 0 0 10px 1px white;
 }
 
 .terminal .screen .response {
@@ -119,7 +107,7 @@
     width: 100%;
     background-color: rgb(46, 46, 46);
 }
-.terminal .typing .inputing .typing-content {
+.terminal .typing .inputing .terminal-typing-content {
     outline: none;
     color: white;
     border: none;
@@ -129,20 +117,20 @@
     background-color: transparent;
     z-index: 2;
 }
-.terminal .typing .inputing .comand-preview {
+.terminal .typing .inputing .terminal-command-preview {
     left: 4px;
     padding: 2px 4px;
     color: rgba(255, 255, 255, 0.5);
     z-index: 0;
 }
-.terminal .typing .inputing .params-guide {
+.terminal .typing .inputing .terminal-args-guide {
     bottom: calc(100% + 4px);
     padding: 2px 8px;
     left: 0px;
     background-color: rgb(46, 46, 46);
     z-index: 0;
 }
-.terminal .typing .inputing .auto-complete {
+.terminal .typing .inputing .terminal-auto-complete {
     top: calc(100% + 8px);
     left: -12px;
     max-height: 95px;
@@ -156,11 +144,11 @@
     padding: 4px;
     z-index: 0;
 }
-.terminal .typing .inputing .auto-complete .entry {
+.terminal .typing .inputing .terminal-auto-complete .entry {
     overflow: visible;
     direction: ltr;
 }
-.terminal .typing .inputing .auto-complete .entry .cursor {
+.terminal .typing .inputing .terminal-auto-complete .entry .cursor {
     /* display: none; */
     opacity: 0;
     width: 0;
@@ -172,7 +160,7 @@
     background-color: red;
     transition: 0.4s;
 }
-.terminal .typing .inputing .auto-complete .entry .value {
+.terminal .typing .inputing .terminal-auto-complete .entry .value {
     cursor: pointer;
     color: black;
     margin: 3px 0px;
@@ -180,14 +168,14 @@
     padding: 2px 5px;
     background-color: rgba(44, 44, 44, 0.7);
 }
-.terminal .typing .inputing .auto-complete .entry:hover .cursor,
-.terminal .typing .inputing .auto-complete .entry.selected .cursor {
+.terminal .typing .inputing .terminal-auto-complete .entry:hover .cursor,
+.terminal .typing .inputing .terminal-auto-complete .entry.selected .cursor {
     /* display: inline-block; */
     width: 10px;
     height: 10px;
     opacity: 1;
 }
-.terminal .typing .inputing .auto-complete .entry:hover .value,
-.terminal .typing .inputing .auto-complete .entry.selected .value {
+.terminal .typing .inputing .terminal-auto-complete .entry:hover .value,
+.terminal .typing .inputing .terminal-auto-complete .entry.selected .value {
     color: rgb(0, 255, 0);
 }

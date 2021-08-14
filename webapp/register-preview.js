@@ -2,10 +2,11 @@
 
 import { AppConfig } from './app.js';
 import { httpClientService, localStorageService } from './common.js';
-import { dateUtils, utils } from './common.utils.js';
+import { utils } from './common.utils.js';
+import { registerPreviewUtils } from './register-preview.utils.js';
 
-// const TABLE_ROW_HEIGHT = 23;
-const TABLE_ROW_HEIGHT = 25;
+// const TABLE_ROW_HEIGHT = 25;
+const TABLE_ROW_HEIGHT = 30;
 
 const NUM_OF_HOUR = 24;
 const NUM_OF_DAYWEEK = 7;
@@ -20,8 +21,8 @@ var TIMETABLE_DATA_DAY_WEEK_ELEMENTS = [];
 //EXPLAIN: mảng lưu hourOfDay
 var TIMETABLE_DATA_DAY_WEEK_ELEMENTS_WITH_HOUR_OF_DAYS = [[], [], [], [], [], [], []];
 
-const CONTAINER_CLASS_IDS_TAG = document.getElementById('classIds');
-const CONTAINER_GUESS_CLASS_IDS_TAG = document.getElementById('guessIds');
+const CLASS_IDS_TAG = document.getElementById('classIds');
+const GUESS_CLASS_IDS_TAG = document.getElementById('guessIds');
 
 const TERM_PREVIEW_TAG = document.getElementById('termPreview');
 const WEEK_PREVIEW_TAG = document.getElementById('weekPreview');
@@ -36,11 +37,31 @@ const CLOSE_PAGE_MESSAGES_TAG = document.getElementById('closePageMessages');
 
 var REGISTER_PREVIEW_VERSION = 'v2020.07';
 
+class LopDangKy {
+    ma_lop = -1;
+    ma_lop_kem = -1;
+    loai_lop = '';
+    ma_hoc_phan = '';
+    ten_hoc_phan = '';
+
+    buoi_hoc_so = -1;
+    thu_hoc = '';
+    thoi_gian_hoc = '';
+    phong_hoc = '';
+    tuan_hoc = '';
+    ghi_chu = '';
+
+    _timestamp = -1; // meta data
+
+    // addition field
+    div;
+    time = { start_h: 0, start_m: 0, stop_h: 0, stop_m: 0 };
+}
+
 class HiddenUtils {
     execute_order(number) {
         let autoRegisterTag = document.getElementById('auto-register');
         let inputPasswordTag = document.getElementById('inputPassword');
-        let inputBeginTag = document.getElementById('inputBegin');
 
         switch (number) {
             case 66:
@@ -53,8 +74,8 @@ class HiddenUtils {
                 let username = userInputManager.getInputMssv_Value();
                 let password = inputPasswordTag.value;
 
-                let beginDate = inputBeginTag.querySelector('#inputDate').value;
-                let beginTime = inputBeginTag.querySelector('#inputTime').value;
+                let beginDate = document.querySelector('#inputDate').value;
+                let beginTime = document.querySelector('#inputTime').value;
                 let begin = new Date(beginDate + ' ' + beginTime).getTime();
 
                 let classIds = userInputManager.getClassIdsFromUserInput();
@@ -88,30 +109,6 @@ class HiddenUtils {
 }
 const hiddenUtils = new HiddenUtils();
 
-class RegisterPreviewUtils {
-    extractClassIdsFromString(value = '') {
-        let result = value
-            .split(/\s*,\s*|\s+/)
-            .map((e) => e.replace(/[\D]+/g, ''))
-            .filter((e) => e != '');
-        return result;
-    }
-    generateQueryFromClassIds(ids = []) {
-        let result = ids
-            .filter((e) => e != '')
-            .reduce((total, each) => `${total}${each},`, '')
-            .slice(0, -1);
-        return result;
-    }
-    reformatClasses(classes = []) {
-        return classes.map((classs) => {
-            delete classs._id;
-            return classs;
-        });
-    }
-}
-const registerPreviewUtils = new RegisterPreviewUtils();
-
 /**
  * quản lí data lưu vào local storage
  */
@@ -121,16 +118,6 @@ class LocalStorageRegisterPreviewService {
     }
     get(name = '') {
         return localStorageService.get(PREFIX_LOCAL_STORAGE_REGISTER_PREVIEW, name);
-    }
-    init() {
-        let mssv = localStorageRegisterPreviewManager.get('mssv');
-        if (mssv) userInputManager.setInputMssv_Value(mssv);
-
-        let termPreview = localStorageRegisterPreviewManager.get('term-preview');
-        if (termPreview) termPreviewManager.setTermPreviewValue(termPreview);
-
-        let weekPreview = localStorageRegisterPreviewManager.get('week-preview');
-        if (weekPreview) weekPreviewManager.setWeekPreviewValue(weekPreview);
     }
 }
 const localStorageRegisterPreviewManager = new LocalStorageRegisterPreviewService();
@@ -154,7 +141,7 @@ class UserInputManager {
     }
 
     getValueArrayFromUserInput() {
-        let result = Array.from(CONTAINER_CLASS_IDS_TAG.querySelectorAll('.input')).map((e) => e.textContent.trim());
+        let result = Array.from(CLASS_IDS_TAG.querySelectorAll('.input')).map((e) => e.textContent.trim());
         return result;
     }
     getClassIdsFromUserInput() {
@@ -179,7 +166,7 @@ class WeekPreviewManager {
         let termPreview = termPreviewManager.getTermPreviewValue();
 
         weekPreviewManager.setWeekPreviewValue(weekPreview);
-        timeTableRenderSerivce.addClasses(TIMETABLE_DATA_PREVIEWING_CLASSES, termPreview);
+        timeTableRenderSerivce.renderClasses(TIMETABLE_DATA_PREVIEWING_CLASSES, termPreview);
         localStorageRegisterPreviewManager.set('week-preview', weekPreview);
     }
     setWeekPreviewValue(value = -1) {
@@ -242,33 +229,29 @@ class PageMessageManager {
         }
         pageMessageManager.updateNumberMessages();
     }
-    addNotHaveTimeClass(classs) {
+    addNotHaveTimeClass(lopDangKy = new LopDangKy()) {
         let html = `
             <h3 class="messageType">Special Case</h3>
             <div class="messageContent">
                 <div class=""><b class="redText">ko thời gian</b></div>
-                <div class="">${classs['tenHocPhan']}</div>
-                <div class="">${classs['ghiChu']}</div>
+                <div class="">${lopDangKy.ten_hoc_phan}</div>
+                <div class="">${lopDangKy.ghi_chu}</div>
             </div>
         `;
         pageMessageManager.addMessageWithListener(html);
     }
-    addOverlapTimeClasses(classes = []) {
-        let html = classes.reduce((total, classs) => {
-            let thoiGian = classs['thoiGian'];
-            let startString = classTimeFormat(thoiGian.startHour, thoiGian.startMinute);
-            let endString = classTimeFormat(thoiGian.endHour, thoiGian.endMinute);
-            let thoiGianString = startString + '-' + endString;
+    addOverlapTimeClasses(classes = [new LopDangKy()]) {
+        let html = classes.reduce(function (total, lopDangKy) {
+            let time = lopDangKy.time;
+            let _start = registerPreviewUtils.timeFormat(time.start_h, time.start_m);
+            let _stop = registerPreviewUtils.timeFormat(time.stop_h, time.stop_m);
+            let _time = _start + '-' + _stop;
 
             let innerHTML = `
                 <div class="section">
-                    <div class="">${classs['tenHocPhan']}</div>
-    
-                    <div class=""><b class="redText">${thoiGianString}</b></div>
-                    <div class="">${classs['phong']}</div>
-    
-                    <div class=""><b class="redText">${classs['ngay']}</b></div>
-                    <div class="">${classs['nhom']}</div>
+                    <div class="">${lopDangKy.ten_hoc_phan}</div>
+                    <div class=""><b class="redText">${_time}</b></div>
+                    <div class="">${lopDangKy.phong_hoc}</div>
                 </div>
             `;
 
@@ -291,8 +274,8 @@ const pageMessageManager = new PageMessageManager();
 /**
  * quản lí các element liên quan tới lớp đăng kí
  */
-class LopDangKyElementManager {
-    addClassIdToContainer(value) {
+class ElementsManager {
+    addClassId(value) {
         function createClassIdDiv(value) {
             let div = document.createElement('div');
             div.classList.add('classId');
@@ -305,47 +288,62 @@ class LopDangKyElementManager {
             });
             return div;
         }
-        CONTAINER_CLASS_IDS_TAG.appendChild(createClassIdDiv(value));
+        CLASS_IDS_TAG.appendChild(createClassIdDiv(value));
     }
-    addGuessIdToContainer(value) {
-        function createClassIdDiv(value) {
+    addGuessId(value) {
+        function createGuessIdDiv(value) {
             let div = document.createElement('div');
             div.classList.add('classId', 'noSelect');
             div.innerHTML = `<span class="maLop">${value}</span>`;
             div.addEventListener('click', (e) => {
-                lopDangKyElementManager.addClassIdToContainer(div.textContent);
+                elementsManager.addClassId(div.textContent);
                 div.remove();
             });
             return div;
         }
-        CONTAINER_GUESS_CLASS_IDS_TAG.appendChild(createClassIdDiv(value));
+        GUESS_CLASS_IDS_TAG.appendChild(createGuessIdDiv(value));
     }
-    clearContainerClassIds() {
-        CONTAINER_CLASS_IDS_TAG.innerHTML = '';
+    cleaClassIds() {
+        CLASS_IDS_TAG.innerHTML = '';
     }
-    clearGuessIdsContainer() {
-        CONTAINER_GUESS_CLASS_IDS_TAG.innerHTML = '';
+    clearGuessIds() {
+        GUESS_CLASS_IDS_TAG.innerHTML = '';
+    }
+    hideGuessIds() {
+        GUESS_CLASS_IDS_TAG.style.display = 'none';
+    }
+    showGuessIds() {
+        GUESS_CLASS_IDS_TAG.style.display = null;
     }
 }
-const lopDangKyElementManager = new LopDangKyElementManager();
+const elementsManager = new ElementsManager();
 
-class RegisterPreviewRequestsService {
-    async getClassesGuess(value = '', term = '', callback = console.log) {
-        let query = registerPreviewUtils.generateQueryFromClassIds(registerPreviewUtils.extractClassIdsFromString(value));
-        let url = AppConfig.worker_config.service2.address + `/api/public/classes?ids=${query}&term=${term}&type=near`;
-        return httpClientService.ajax({ url: url, method: 'GET' }, callback);
-    }
-    async getClassesMatch(term = '', ids = [], callback = console.log) {
-        let query = registerPreviewUtils.generateQueryFromClassIds(ids);
-        let url = AppConfig.worker_config.service2.address + `/api/public/classes?ids=${query}&term=${term}&type=match`;
-        return httpClientService.ajax({ url: url, method: 'GET' }, callback);
-    }
-    async getStudentRegister(term = '', mssv = '', callback = console.log) {
-        let url = AppConfig.worker_config.service2.address + `/api/public/student?term=${term}&mssv=${mssv}`;
-        return httpClientService.ajax({ url: url, method: 'GET' }, callback);
+class RegisterPreviewRequests {
+    async findMany(term = '', ids = [], options = { fuzzy: false }) {
+        ids = ids.map((e) => utils.fromAnyToNumber(e));
+        let filter = { ma_lop: { $in: ids } };
+        if (options.fuzzy) {
+            filter = {
+                $or: ids.map(function (id) {
+                    let length = String(id).length;
+                    let missing = 6 - length;
+                    let filter = { ma_lop: id };
+                    if (missing > 0) {
+                        let delta = Math.pow(10, missing);
+                        let gte = id * delta;
+                        let lte = gte + delta;
+                        filter = { ma_lop: { $gte: gte, $lte: lte } };
+                    }
+                    return filter;
+                })
+            };
+        }
+
+        let url = AppConfig.worker_config.service2.address + `/api/public/lop-dang-ky?term=${term}`;
+        return httpClientService.ajax({ url: url, method: 'POST', body: filter });
     }
 }
-const registerPreviewRequestsService = new RegisterPreviewRequestsService();
+const registerPreviewRequests = new RegisterPreviewRequests();
 
 // time table
 class TimeTableUtils {
@@ -382,12 +380,13 @@ class TimeTableUtils {
     }
     scanOverlapTimeClasses() {
         //EXPLAIN: iterate every dayweek
-        for (const classes of TIMETABLE_DATA_DAY_WEEK_CLASSES) {
+        let classes = [new LopDangKy()];
+        for (classes of TIMETABLE_DATA_DAY_WEEK_CLASSES) {
             let overlapHandeledClasses = []; //EXPLAIN: handled class on that day, skip when meet again
 
             //EXPLAIN: iterate classes on that day
-            for (const mainClass of classes) {
-                if (utils.existInArray(mainClass, overlapHandeledClasses)) continue;
+            for (const main_class of classes) {
+                if (utils.existInArray(main_class, overlapHandeledClasses)) continue;
 
                 let existOverlap = false;
                 let overlapClasses = []; //EXPLAIN: array with all class that same with main
@@ -395,30 +394,30 @@ class TimeTableUtils {
 
                 //EXPLAIN: main class compare with other class on that day
                 // if overlap then existOverlap = true
-                for (const otherClass of classes) {
-                    if (otherClass == mainClass) continue;
+                for (const other_class of classes) {
+                    if (other_class == main_class) continue;
 
-                    let mainTime = mainClass['thoiGian'];
-                    let otherTime = otherClass['thoiGian'];
+                    let time_main = main_class.time;
+                    let time_other = other_class.time;
 
-                    let mainStart = mainTime.startHour * 60 + mainTime.startMinute;
-                    let otherStart = otherTime.startHour * 60 + otherTime.startMinute;
+                    let start_main = time_main.start_h * 60 + time_main.start_m;
+                    let stop_main = time_main.stop_h * 60 + time_main.stop_m;
 
-                    let mainEnd = mainTime.endHour * 60 + mainTime.endMinute;
-                    let otherEnd = otherTime.endHour * 60 + otherTime.endMinute;
+                    let start_other = time_other.start_h * 60 + time_other.start_m;
+                    let stop_other = time_other.stop_h * 60 + time_other.stop_m;
 
-                    let notOverlap = mainStart > otherEnd || mainEnd < otherStart;
+                    let notOverlap = start_main > stop_other || stop_main < start_other;
                     if (notOverlap) continue;
 
                     existOverlap = true;
-                    overlapHandeledClasses.push(otherClass);
-                    overlapClasses.push(otherClass);
+                    overlapHandeledClasses.push(other_class);
+                    overlapClasses.push(other_class);
                 }
 
                 //EXPLAIN: if have overlap add mainClass to handled so skip if meet again
                 if (existOverlap) {
-                    overlapHandeledClasses.push(mainClass);
-                    overlapClasses.push(mainClass);
+                    overlapHandeledClasses.push(main_class);
+                    overlapClasses.push(main_class);
                     pageMessageManager.addOverlapTimeClasses(overlapClasses);
                 }
             }
@@ -434,7 +433,9 @@ class TimeTableCleaner {
     //EXPLAIN: giữ mảng chính, clear mảng ngày, clear html div.class
     clearOnlyClassRenders() {
         TIMETABLE_DATA_DAY_WEEK_CLASSES = TIMETABLE_DATA_DAY_WEEK_CLASSES.map(() => []); //EXPLAIN: reset each day of week
-        TIMETABLE_DATA_DAY_WEEK_ELEMENTS.forEach((dayOfWeek) => dayOfWeek.querySelectorAll('.classRender').forEach((each) => each.remove()));
+        TIMETABLE_DATA_DAY_WEEK_ELEMENTS.forEach((dayOfWeek) =>
+            dayOfWeek.querySelectorAll('.classRender').forEach((each) => each.remove())
+        );
     }
     clearAllClassDetails() {
         Array.from(document.querySelectorAll('.classDetails')).forEach((each) => each.remove());
@@ -443,22 +444,6 @@ class TimeTableCleaner {
 const timeTableCleaner = new TimeTableCleaner();
 
 // rendering
-class LopDangKyRenderPattern {
-    maLop;
-    maLopKem;
-    loaiLop;
-    maHocPhan;
-    tenHocPhan;
-
-    thoiGian;
-    thu;
-    phong;
-    tuan;
-
-    nhom;
-    ngay;
-    ghiChu;
-}
 class TimeTableRenderService {
     initTable(dropHours = new Set(), TABLE_ROW_HEIGHT = 23) {
         RENDER_TABLE_TAG.innerHTML = ``;
@@ -515,7 +500,9 @@ class TimeTableRenderService {
                     dayName = 'Sun';
                     break;
             }
-            column.innerHTML = `<div class="columName dadFlexCenter" style="height:${TABLE_ROW_HEIGHT + 'px'}"><span>${dayName}</span></div>`;
+            column.innerHTML = `<div class="columName dadFlexCenter" style="height:${
+                TABLE_ROW_HEIGHT + 'px'
+            }"><span>${dayName}</span></div>`;
             for (let i = 0; i < NUM_OF_HOUR; i++) {
                 let hourOfDay = document.createElement('div');
                 hourOfDay.classList.add('hourOfDay', `_${i}h`);
@@ -534,7 +521,9 @@ class TimeTableRenderService {
 
         TIMETABLE_DATA_DAY_WEEK_ELEMENTS = Array.from(RENDER_TABLE_TAG.querySelectorAll('.dayOfWeek'));
         for (let i = 0; i < NUM_OF_DAYWEEK; i++) {
-            TIMETABLE_DATA_DAY_WEEK_ELEMENTS_WITH_HOUR_OF_DAYS[i] = Array.from(TIMETABLE_DATA_DAY_WEEK_ELEMENTS[i].querySelectorAll('.hourOfDay'));
+            TIMETABLE_DATA_DAY_WEEK_ELEMENTS_WITH_HOUR_OF_DAYS[i] = Array.from(
+                TIMETABLE_DATA_DAY_WEEK_ELEMENTS[i].querySelectorAll('.hourOfDay')
+            );
         }
 
         //EXPLAIN: scroll to working hour
@@ -542,355 +531,60 @@ class TimeTableRenderService {
         // renderContainer.style.height = 14 * TABLE_ROW_HEIGHT + 'px';
         // renderContainer.scrollTo(0, 6 * TABLE_ROW_HEIGHT);
     }
-    addElementRender(classs, TABLE_ROW_HEIGHT = 23) {
-        let thu = classs['thu'];
-        let time = classs['thoiGian'];
+    renderLopDangKy(lopDangKy = new LopDangKy()) {
+        let tuanHoc = lopDangKy.tuan_hoc;
+        if (timeTableUtils.notHaveClassTime(tuanHoc)) {
+            pageMessageManager.addNotHaveTimeClass(lopDangKy);
+            return;
+        } else if (!timeTableUtils.hasClassThisWeek(tuanHoc)) {
+            return;
+        }
 
-        let hourOfDayElement = timeTableUtils.getHourOfDayElement(thu, time.startHour);
-        let top = hourOfDayElement.offsetTop + (time.startMinute / 60) * TABLE_ROW_HEIGHT;
-        let height = (time.endHour - time.startHour + (time.endMinute - time.startMinute) / 60) * TABLE_ROW_HEIGHT;
+        let thoiGianHoc = lopDangKy.thoi_gian_hoc; //EXPLAIN: VD: 1234-5678 -> 12h34p - 56h78p
+        let time = {
+            start_h: parseInt(thoiGianHoc.substr(0, 2)),
+            start_m: parseInt(thoiGianHoc.substr(2, 3)),
+            stop_h: parseInt(thoiGianHoc.substr(5, 2)),
+            stop_m: parseInt(thoiGianHoc.substr(7, 2))
+        };
+        lopDangKy.time = time;
 
-        let time_start = timeTableUtils.classTimeFormat(time.startHour, time.startMinute);
-        let time_end = timeTableUtils.classTimeFormat(time.endHour, time.endMinute);
+        let hourOfDayElement = timeTableUtils.getHourOfDayElement(lopDangKy.thu_hoc, time.start_h);
+        let top = hourOfDayElement.offsetTop + (time.start_m / 60) * TABLE_ROW_HEIGHT;
+        let height = (time.stop_h - time.start_h + (time.stop_m - time.start_m) / 60) * TABLE_ROW_HEIGHT;
 
-        let classRenderElement = document.createElement('div');
-        classRenderElement.classList.add('classRender', 'positionAbsolute');
-        classRenderElement.style.top = `${top}px`;
-        classRenderElement.style.height = `${height}px`;
+        let _time_start = timeTableUtils.classTimeFormat(time.start_h, time.start_m);
+        let _time_stop = timeTableUtils.classTimeFormat(time.stop_h, time.stop_m);
+
+        let newElement = document.createElement('div');
+        newElement.classList.add('classRender', 'positionAbsolute');
+        newElement.style.top = `${top}px`;
+        newElement.style.height = `${height}px`;
         let rgb = `rgb(${255 - Math.random() * 150},${255 - Math.random() * 150},${255 - Math.random() * 150})`;
-        classRenderElement.style.backgroundColor = rgb;
-        classRenderElement.innerHTML = `
+        newElement.style.backgroundColor = rgb;
+        newElement.innerHTML = `
             <div class="classContainer positionRelative dadFlexCenter">
                 <div class="classProps">
-                    <div class="tenHocPhan classProp">${classs['tenHocPhan']} (${classs['loaiLop']})</div>
-                    <div class="thoiGian classProp">${time_start + ' - ' + time_end}</div>
-                    <div class="phong classProp">${classs['phong']}</div>
+                    <div class="classProp">${lopDangKy.ten_hoc_phan} (${lopDangKy.loai_lop})</div>
+                    <div class="classProp">${_time_start + ' - ' + _time_stop}</div>
+                    <div class="lassProp">${lopDangKy.phong_hoc}</div>
                 </div>
             </div>
         `;
-        // classRenderElement.style.zIndex = 20 - thu;
-        classRenderElement.style.zIndex = 15;
-        TIMETABLE_DATA_DAY_WEEK_ELEMENTS[thu - 2].appendChild(classRenderElement);
-        TIMETABLE_DATA_DAY_WEEK_CLASSES[thu - 2].push({ ...classs, div: classRenderElement });
+
+        // classRenderElement.style.zIndex = 20 - thu_hoc;
+        newElement.style.zIndex = 15;
+        TIMETABLE_DATA_DAY_WEEK_ELEMENTS[lopDangKy.thu_hoc - 2].appendChild(newElement);
+        lopDangKy.div = newElement;
+        TIMETABLE_DATA_DAY_WEEK_CLASSES[lopDangKy.thu_hoc - 2].push(lopDangKy);
     }
-    addCacBuoiHoc_BuoiHoc(classs) {
-        let cacBuoiHoc = classs['cacBuoiHoc'];
-        if (!cacBuoiHoc) return;
-        for (const buoiHoc of cacBuoiHoc) {
-            let tuanHoc = buoiHoc['tuanHoc'];
-            if (timeTableUtils.notHaveClassTime(tuanHoc)) {
-                pageMessageManager.addNotHaveTimeClass(classs);
-                continue;
-            } else if (!timeTableUtils.hasClassThisWeek(tuanHoc)) continue;
-
-            let thuHoc = buoiHoc['thuHoc'];
-
-            let thoiGianHoc = buoiHoc['thoiGianHoc']; //EXPLAIN: VD: 1234-5678 -> 12h34p - 56h78p
-            let time = {
-                startHour: parseInt(thoiGianHoc.substr(0, 2)),
-                startMinute: parseInt(thoiGianHoc.substr(2, 3)),
-                endHour: parseInt(thoiGianHoc.substr(5, 2)),
-                endMinute: parseInt(thoiGianHoc.substr(7, 2))
-            };
-
-            let pattern = new LopDangKyRenderPattern();
-
-            pattern.maLop = classs['maLop'];
-            pattern.loaiLop = classs['loaiLop'];
-            pattern.maLopKem = classs['maLopKem'];
-            pattern.maHocPhan = classs['maHocPhan'];
-            pattern.tenHocPhan = classs['tenHocPhan'];
-            pattern.ghiChu = classs['ghiChu'];
-
-            pattern.thoiGian = time;
-            pattern.thu = thuHoc;
-            pattern.phong = buoiHoc['phongHoc'];
-            pattern.tuan = tuanHoc;
-
-            timeTableRenderSerivce.addElementRender(pattern, TABLE_ROW_HEIGHT);
-        }
-    }
-    addThiGiuaKi_NhomThi(classs, firstWeekDay = '') {
-        let cacNhom = classs['thiGiuaKi'];
-        if (!cacNhom) return;
-        for (const nhomThi of cacNhom) {
-            let tuanThi = nhomThi['tuanThi'].substr(1);
-            if (tuanThi == '') {
-                tuanThi = String(dateUtils.weeksFromStartDay(nhomThi['ngayThi'], firstWeekDay));
-            }
-            if (timeTableUtils.notHaveClassTime(tuanThi)) {
-                pageMessageManager.addNotHaveTimeClass(classs);
-                continue;
-            } else if (!timeTableUtils.hasClassThisWeek(tuanThi)) continue;
-
-            let thuThi = nhomThi['thuThi'];
-            if (thuThi == null || thuThi == undefined || thuThi == '') continue;
-            switch (thuThi) {
-                case 'Thứ hai':
-                    thuThi = 2;
-                    break;
-                case 'Thứ ba':
-                    thuThi = 3;
-                    break;
-                case 'Thứ tư':
-                    thuThi = 4;
-                    break;
-                case 'Thứ năm':
-                    thuThi = 5;
-                    break;
-                case 'Thứ sáu':
-                    thuThi = 6;
-                    break;
-                case 'Thứ bảy':
-                    thuThi = 7;
-                    break;
-                case 'Chủ nhật':
-                    thuThi = 8;
-                    break;
-            }
-
-            let kipThi = nhomThi['kipThi']; //EXPLAIN: VD: 1234-5678 -> 12h34p - 56h78p
-            let time = {
-                startHour: 0,
-                startMinute: 0,
-                endHour: 0,
-                endMinute: 0
-            };
-
-            if (kipThi.match(/Kíp \d-\d/gi)) {
-                let intStart = kipThi.charAt(4);
-                let intEnd = kipThi.charAt(6);
-                switch (intStart) {
-                    case '1':
-                        time.startHour = 7;
-                        time.startMinute = 0;
-                        break;
-                    case '2':
-                        time.startHour = 9;
-                        time.startMinute = 30;
-                        break;
-                    case '3':
-                        time.startHour = 12;
-                        time.startMinute = 30;
-                        break;
-                    case '4':
-                        time.startHour = 15;
-                        time.startMinute = 0;
-                        break;
-                }
-                switch (intEnd) {
-                    case '1':
-                        time.endHour = 8;
-                        time.endMinute = 30;
-                        break;
-                    case '2':
-                        time.endHour = 11;
-                        time.endMinute = 0;
-                        break;
-                    case '3':
-                        time.endHour = 14;
-                        time.endMinute = 0;
-                        break;
-                    case '4':
-                        time.endHour = 16;
-                        time.endMinute = 30;
-                        break;
-                }
-            } else if (kipThi.match(/Kíp 1/gi)) {
-                time.startHour = 7;
-                time.startMinute = 0;
-                time.endHour = 8;
-                time.endMinute = 30;
-            } else if (kipThi.match(/Kíp 2/gi)) {
-                time.startHour = 9;
-                time.startMinute = 30;
-                time.endHour = 11;
-                time.endMinute = 0;
-            } else if (kipThi.match(/Kíp 3/gi)) {
-                time.startHour = 12;
-                time.startMinute = 30;
-                time.endHour = 14;
-                time.endMinute = 0;
-            } else if (kipThi.match(/Kíp 4/gi)) {
-                time.startHour = 15;
-                time.startMinute = 0;
-                time.endHour = 16;
-                time.endMinute = 30;
-            } else {
-                let matches = kipThi.match(/\d+h\d*/gi);
-                // console.log(matches);
-                if (matches) {
-                    let temp = matches[0].split('h');
-                    time.startHour = parseInt(temp[0]);
-                    time.startMinute = parseInt(temp[1] == '' ? '0' : temp[1]);
-                    if (matches[1] == undefined) {
-                        time.endHour = time.startHour + 1;
-                        time.startMinute = time.startMinute;
-                    } else {
-                        temp = matches[1].split('h');
-                        time.endHour = parseInt(temp[0]);
-                        time.endMinute = parseInt(temp[1] == '' ? '0' : temp[1]);
-                    }
-                }
-            }
-
-            let pattern = new LopDangKyRenderPattern();
-
-            pattern.maLop = classs['maLop'];
-            pattern.maLopKem = classs['maLopKem'];
-            pattern.loaiLop = classs['loaiLop'];
-            pattern.maHocPhan = classs['maHocPhan'];
-            pattern.tenHocPhan = classs['tenHocPhan'];
-            pattern.ghiChu = classs['ghiChu'];
-
-            pattern.thoiGian = time;
-            pattern.thu = thuThi;
-            pattern.phong = nhomThi['phongThi'];
-            pattern.tuan = tuanThi;
-            pattern.ngay = nhomThi['ngayThi'];
-
-            pattern.nhom = nhomThi['name'];
-
-            timeTableRenderSerivce.addElementRender(pattern, TABLE_ROW_HEIGHT);
-        }
-    }
-    addThiCuoiKi_NhomThi(classs, firstWeekDay = '') {
-        let cacNhom = classs['thiCuoiKi'];
-        if (!cacNhom) return;
-        for (const nhomThi of cacNhom) {
-            let tuanThi = nhomThi['tuanThi'].substr(1);
-            if (tuanThi == '') {
-                tuanThi = String(dateUtils.weeksFromStartDay(nhomThi['ngayThi'], firstWeekDay));
-            }
-            if (timeTableUtils.notHaveClassTime(tuanThi)) {
-                pageMessageManager.addNotHaveTimeClass(classs);
-                continue;
-            } else if (!timeTableUtils.hasClassThisWeek(tuanThi)) continue;
-
-            let thuThi = nhomThi['thuThi'];
-            if (thuThi == null || thuThi == undefined || thuThi == '') continue;
-            switch (thuThi) {
-                case 'Thứ hai':
-                    thuThi = 2;
-                    break;
-                case 'Thứ ba':
-                    thuThi = 3;
-                    break;
-                case 'Thứ tư':
-                    thuThi = 4;
-                    break;
-                case 'Thứ năm':
-                    thuThi = 5;
-                    break;
-                case 'Thứ sáu':
-                    thuThi = 6;
-                    break;
-                case 'Thứ bảy':
-                    thuThi = 7;
-                    break;
-                case 'Chủ nhật':
-                    thuThi = 8;
-                    break;
-            }
-
-            let kipThi = nhomThi['kipThi']; //EXPLAIN: VD: 1234-5678 -> 12h34p - 56h78p
-            let time = {
-                startHour: 0,
-                startMinute: 0,
-                endHour: 0,
-                endMinute: 0
-            };
-            if (kipThi.match(/Kíp \d-\d/gi)) {
-                let intStart = kipThi.charAt(4);
-                let intEnd = kipThi.charAt(6);
-                switch (intStart) {
-                    case '1':
-                        time.startHour = 7;
-                        time.startMinute = 0;
-                        break;
-                    case '2':
-                        time.startHour = 9;
-                        time.startMinute = 30;
-                        break;
-                    case '3':
-                        time.startHour = 12;
-                        time.startMinute = 30;
-                        break;
-                    case '4':
-                        time.startHour = 15;
-                        time.startMinute = 0;
-                        break;
-                }
-                switch (intEnd) {
-                    case '1':
-                        time.endHour = 8;
-                        time.endMinute = 30;
-                        break;
-                    case '2':
-                        time.endHour = 11;
-                        time.endMinute = 0;
-                        break;
-                    case '3':
-                        time.endHour = 14;
-                        time.endMinute = 0;
-                        break;
-                    case '4':
-                        time.endHour = 16;
-                        time.endMinute = 30;
-                        break;
-                }
-            } else if (kipThi.match(/Kíp 1/gi)) {
-                time.startHour = 7;
-                time.startMinute = 0;
-                time.endHour = 8;
-                time.endMinute = 30;
-            } else if (kipThi.match(/Kíp 2/gi)) {
-                time.startHour = 9;
-                time.startMinute = 30;
-                time.endHour = 11;
-                time.endMinute = 0;
-            } else if (kipThi.match(/Kíp 3/gi)) {
-                time.startHour = 12;
-                time.startMinute = 30;
-                time.endHour = 14;
-                time.endMinute = 0;
-            } else if (kipThi.match(/Kíp 4/gi)) {
-                time.startHour = 15;
-                time.startMinute = 0;
-                time.endHour = 16;
-                time.endMinute = 30;
-            }
-
-            let pattern = new LopDangKyRenderPattern();
-
-            pattern.maLop = classs['maLop'];
-            pattern.maLopKem = classs['maLopKem'];
-            pattern.loaiLop = classs['loaiLop'];
-            pattern.maHocPhan = classs['maHocPhan'];
-            pattern.tenHocPhan = classs['tenHocPhan'];
-            pattern.ghiChu = classs['ghiChu'];
-
-            pattern.thoiGian = time;
-            pattern.thu = thuThi;
-            pattern.phong = nhomThi['phongThi'];
-            pattern.tuan = tuanThi;
-            pattern.ngay = nhomThi['ngayThi'];
-
-            pattern.nhom = nhomThi['name'];
-
-            timeTableRenderSerivce.addElementRender(pattern, TABLE_ROW_HEIGHT);
-        }
-    }
-    addClasses(classes = [], term = '') {
+    renderClasses(classes = []) {
         pageMessageManager.clearNotificationQueue();
         timeTableCleaner.clearOnlyClassRenders();
         timeTableCleaner.clearAllClassDetails();
 
-        // let firstWeekDay = registerPreviewLocalStorageManager.getTermFirstWeekDay(term);
-        for (const classs of classes) {
-            timeTableRenderSerivce.addCacBuoiHoc_BuoiHoc(classs);
-            // timeTableRenderSerivce.addThiGiuaKi_NhomThi(classs, firstWeekDay);
-            // timeTableRenderSerivce.addThiCuoiKi_NhomThi(classs, firstWeekDay);
+        for (const lopDangKy of classes) {
+            timeTableRenderSerivce.renderLopDangKy(lopDangKy);
         }
 
         timeTableUtils.scanOverlapTimeClasses();
@@ -910,57 +604,26 @@ async function REGISTER_PREVIEW() {
     let loadingSign = document.getElementById('register-preview-loading-sign');
 
     loadingSign.style.display = null;
-    let mssv = userInputManager.getInputMssv_Value();
-    let studentRegister;
-    let studentRegisterClasses = new Map();
 
     let termPreview = termPreviewManager.getTermPreviewValue();
     localStorageRegisterPreviewManager.set('term-preview', termPreview);
     let weekPreview = weekPreviewManager.getWeekPreviewValue();
     localStorageRegisterPreviewManager.set('week-preview', weekPreview);
 
-    if (mssv != '') {
-        let response = await registerPreviewRequestsService.getStudentRegister(termPreview, mssv, (data) => data);
-        if (response.code == 1) studentRegister = response.data;
-        localStorageRegisterPreviewManager.set('mssv', mssv);
-    }
-
     let classIds = userInputManager.getClassIdsFromUserInput();
-    if (studentRegister) {
-        classIds = studentRegister.dangKi.map(function (each) {
-            let maLop = each.maLop;
-            studentRegisterClasses.set(maLop, each);
-            return maLop;
-        });
-    }
 
-    registerPreviewRequestsService.getClassesMatch(termPreview, classIds, function (response) {
-        if (response.code == 1) {
-            let classes = registerPreviewUtils.reformatClasses(response.data);
+    let response = await registerPreviewRequests.findMany(termPreview, classIds);
+    if (response.code == 1) {
+        let classes = response.data;
 
-            if (studentRegister) {
-                lopDangKyElementManager.clearContainerClassIds();
-                classes = classes.map(function (classs) {
-                    let nhom = studentRegisterClasses.get(classs.maLop).nhom;
-                    classs.thiGiuaKi = classs.thiGiuaKi?.filter((each) => each.name == nhom);
-                    classs.thiCuoiKi = classs.thiCuoiKi?.filter((each) => each.name == nhom);
-                    lopDangKyElementManager.addClassIdToContainer(`${classs.maLop} - ${classs.tenHocPhan} - ${classs.loaiLop}`);
-                    return classs;
-                });
-            }
-
-            //EXPLAIN: có thể change sau query với trường hợp dùng mssv
-            let userInputClassIds = userInputManager.getValueArrayFromUserInput();
-
-            //EXPLAIN: có thể query quá lâu người dùng chuyển kì sẽ bị sai
-            if (termPreviewManager.getTermPreviewValue() == termPreview) {
-                // nên check nếu đúng thì mới update giá trị và render
-                TIMETABLE_DATA_PREVIEWING_CLASSES = classes;
-                timeTableRenderSerivce.addClasses(classes, termPreview);
-            }
+        //EXPLAIN: có thể query quá lâu người dùng chuyển kì sẽ bị sai
+        if (termPreviewManager.getTermPreviewValue() == termPreview) {
+            // nên check nếu đúng thì mới update giá trị và render
+            TIMETABLE_DATA_PREVIEWING_CLASSES = classes;
+            timeTableRenderSerivce.renderClasses(classes);
         }
-        loadingSign.style.display = 'none';
-    });
+    }
+    loadingSign.style.display = 'none';
 }
 
 document.getElementById('secret-show').addEventListener('click', function () {
@@ -985,62 +648,71 @@ httpClientService.ajax({ url: '/register-preview.version.txt', method: 'GET' }, 
     document.getElementById('register-preview-version').innerText = REGISTER_PREVIEW_VERSION || 'v2020.07';
 });
 
-function main() {
-    INPUT_MSSV_TAG.addEventListener('keydown', (e) => {
-        if (e.key == 'Enter') setTimeout(REGISTER_PREVIEW, 50);
-    });
+OPEN_PAGE_MESSAGES_TAG.addEventListener('click', function () {
+    //EXPLAIN: check nếu đang dragging thì k kích hoạt
+    if (OPEN_PAGE_MESSAGES_TAG.getAttribute('data-animation-dragging') == 'true') return;
 
-    // page message init
-    OPEN_PAGE_MESSAGES_TAG.addEventListener('click', function () {
-        //EXPLAIN: check nếu đang dragging thì k kích hoạt
-        if (OPEN_PAGE_MESSAGES_TAG.getAttribute('data-animation-dragging') == 'true') return;
+    PAGE_MESSAGES_CONTENT_TAG.classList.toggle('hidden');
+    CLOSE_PAGE_MESSAGES_TAG.classList.toggle('hidden');
+});
+CLOSE_PAGE_MESSAGES_TAG.addEventListener('click', function () {
+    PAGE_MESSAGES_CONTENT_TAG.classList.add('hidden');
+    CLOSE_PAGE_MESSAGES_TAG.classList.add('hidden');
+});
 
-        PAGE_MESSAGES_CONTENT_TAG.classList.toggle('hidden');
-        CLOSE_PAGE_MESSAGES_TAG.classList.toggle('hidden');
-    });
-    CLOSE_PAGE_MESSAGES_TAG.addEventListener('click', function () {
-        PAGE_MESSAGES_CONTENT_TAG.classList.add('hidden');
-        CLOSE_PAGE_MESSAGES_TAG.classList.add('hidden');
-    });
+let dropHours = new Set([]);
+timeTableRenderSerivce.initTable(dropHours, TABLE_ROW_HEIGHT);
 
-    let dropHours = new Set([]);
-    timeTableRenderSerivce.initTable(dropHours, TABLE_ROW_HEIGHT);
+var userInputTimeoutHandler;
+INPUT_CLASS_ID_TAG.addEventListener('keydown', (e) => {
+    clearTimeout(userInputTimeoutHandler);
+    userInputTimeoutHandler = setTimeout(async () => {
+        let userInputClassId = '';
+        userInputClassId = userInputManager.getInputClassIdValue().trim();
+        if (userInputClassId == '' || userInputClassId.match(/^\s+$/)) {
+            elementsManager.clearGuessIds();
+            elementsManager.hideGuessIds();
+            return;
+        }
 
-    var userInputTimeoutHandler;
-    INPUT_CLASS_ID_TAG.addEventListener('keydown', (e) => {
-        clearTimeout(userInputTimeoutHandler);
-        userInputTimeoutHandler = setTimeout(async () => {
-            let value = userInputManager.getInputClassIdValue();
-            if (value == '') return;
-            if (e.key == 'Enter') {
-                lopDangKyElementManager.addClassIdToContainer(value);
-                userInputManager.clearInputClassIdValue();
-            } else if (value.length > 4) {
-                registerPreviewRequestsService.getClassesGuess(value, termPreviewManager.getTermPreviewValue(), (response) => {
-                    if (response.code == 1) {
-                        lopDangKyElementManager.clearGuessIdsContainer();
-                        let classes = registerPreviewUtils.reformatClasses(response.data);
-                        if (classes.length == 0) {
-                            let content = `<div><span style="color: var(--green_neon);">không tìm thấy</span></div>`;
-                            CONTAINER_GUESS_CLASS_IDS_TAG.innerHTML = content;
-                            return;
-                        }
-                        classes.forEach(function (classs) {
-                            let content = `${classs.maLop} - ${classs.tenHocPhan} - ${classs.loaiLop}`;
-                            lopDangKyElementManager.addGuessIdToContainer(content);
-                        });
-                    }
-                });
-            } else {
-                lopDangKyElementManager.clearGuessIdsContainer();
+        if (userInputClassId.length <= 4) {
+            elementsManager.clearGuessIds();
+            elementsManager.hideGuessIds();
+            return;
+        }
+
+        if (e.key == 'Enter') {
+            elementsManager.addClassId(userInputClassId);
+            userInputManager.clearInputClassIdValue();
+            return;
+        }
+
+        let termPreview = termPreviewManager.getTermPreviewValue();
+        let ids = registerPreviewUtils.extractClassIdsFromString(userInputClassId);
+        let response = await registerPreviewRequests.findMany(termPreview, ids, { fuzzy: true });
+
+        if (response.code == 1) {
+            let classes = [new LopDangKy()];
+            classes = response.data;
+            if (classes.length == 0) {
+                elementsManager.clearGuessIds();
+                elementsManager.hideGuessIds();
+                return;
             }
-        }, 50);
-    });
+            elementsManager.showGuessIds();
+            for (let lopDangKy of classes) {
+                let content = `${lopDangKy.ma_lop} - ${lopDangKy.ten_hoc_phan} (${lopDangKy.loai_lop}) - No.${lopDangKy.buoi_hoc_so}`;
+                elementsManager.addGuessId(content);
+            }
+        }
+    }, 50);
+});
 
-    /**
-     * 2 dòng code phía dưới phải để sát nhau không di chuyển ra ngoài
-     * hay thay đổi vị trí của chúng được :( code...
-     */
-    localStorageRegisterPreviewManager.init();
-}
-main();
+let mssv = localStorageRegisterPreviewManager.get('mssv');
+if (mssv) userInputManager.setInputMssv_Value(mssv);
+
+let termPreview = localStorageRegisterPreviewManager.get('term-preview');
+if (termPreview) termPreviewManager.setTermPreviewValue(termPreview);
+
+let weekPreview = localStorageRegisterPreviewManager.get('week-preview');
+if (weekPreview) weekPreviewManager.setWeekPreviewValue(weekPreview);

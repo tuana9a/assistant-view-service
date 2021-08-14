@@ -14,7 +14,9 @@
 
     <link rel="stylesheet" href="terminal.css" />
     <script type="module" defer src="terminal.js"></script>
-    <script type="module" defer src="terminal.command.js"></script>
+    <script type="module" defer src="terminal.commands.js"></script>
+    <script type="module" defer src="automation.commands.js"></script>
+    <script type="module" defer src="register-preview.commands.js"></script>
 </head>
 
 <body>
@@ -43,13 +45,16 @@
                 <strong>❤ Tuana9a's Terminal <b class="version redText" id="terminal-version">v2020.07</b></strong>
             </div>
             <div class="screen" id="terminal-screen"></div>
-            <div class="global dadFlexWrap" id="global-variables"></div>
+            <div class="global dadFlexWrap" id="terminal-env-variables"></div>
             <div class="typing dadFlexCenterVer">
                 <div class="inputing section positionRelative">
-                    <div class="positionAbsolute auto-complete" id="auto-complete"></div>
-                    <span id="comand-preview" class="comand-preview positionAbsolute noSelect"></span>
-                    <div class="positionAbsolute params-guide" id="params-guide" style="display: none"></div>
-                    <input class="positionRelative typing-content" autocomplete="off" id="typing-content" type="text" />
+                    <div class="positionAbsolute terminal-auto-complete" id="terminal-auto-complete"></div>
+                    <span id="terminal-command-preview"
+                        class="terminal-command-preview positionAbsolute noSelect"></span>
+                    <div class="positionAbsolute terminal-args-guide" id="terminal-args-guide" style="display: none">
+                    </div>
+                    <input class="positionRelative terminal-typing-content" autocomplete="off"
+                        id="terminal-typing-content" type="text" />
                 </div>
             </div>
         </div>

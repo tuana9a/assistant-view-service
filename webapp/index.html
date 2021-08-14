@@ -67,13 +67,18 @@
             <div class="section">
                 <div class="section">
                     <h5 style="color: var(--green_neon)">
-                        <span>gõ mã lớp mà bạn muốn tìm kiếm</span><br>
+                        <span>nhập vào mã lớp (một hoặc nhiều)</span><br>
                         <span>VD: "20900", "14600 - lớp xxx", "14600, 20900 LT + BT"</span><br>
                         <span>sau đó chọn trong kết quả tìm kiếm</span><br>
-                        <span>cuối cùng nhấn Enter</span><br>
+                        <span>cuối cùng nhấn button để xem</span><br>
                     </h5>
-                    <div class="dadFlexCenter">
+                    <div class="dadFlexCenter positionRelative">
                         <input class="child60" type="text" autocomplete="off" id="inputClassId" placeholder="ma lop" />
+                        <div class="positionAbsolute dadFlexWrap child60" id="guessIds" style="display: none;">
+                            <!-- <div class="classId">
+                                    <span onclick="addClassId(this.textContent);this.parentElement.remove()" class="maLop">1234</span>
+                                </div> -->
+                        </div>
                     </div>
                     <h4 style="color: var(--green_neon);">or</h4>
                     <div class="dadFlexCenter">
@@ -92,13 +97,6 @@
                         </div>
                         <div class="section dadFlexCenter">
                             <button id="secret-execute" class="neonButtonClick smallButton">generate</button>
-                        </div>
-                    </div>
-                    <div class="dadFlexCenter">
-                        <div class="dadFlexWrap child80" id="guessIds">
-                            <!-- <div class="classId">
-                                    <span onclick="addClassId(this.textContent);this.parentElement.remove()" class="maLop">1234</span>
-                                </div> -->
                         </div>
                     </div>
                 </div>

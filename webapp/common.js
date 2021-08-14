@@ -1,14 +1,8 @@
 'user strict';
 
 //SECTION: request
-export class HttpRequestOption {
-    method = '';
-    url = '';
-    headers = {};
-    body = {};
-}
 class HttpClientService {
-    async ajax(option = new HttpRequestOption(), doneHandler = () => {}, errorHandler = () => {}) {
+    async ajax(option = { method: '', url: '', headers: {}, body: {} }, doneHandler = (data) => data, errorHandler = () => {}) {
         let promise = new Promise((resolve, reject) => {
             try {
                 let xhttp = new XMLHttpRequest();

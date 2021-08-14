@@ -1,5 +1,6 @@
 # tuana9a
 resource/
+.vscode/
 *.code-workspace
 *.cmd
 *.sh

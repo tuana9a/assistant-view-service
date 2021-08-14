@@ -2,217 +2,109 @@
 
 import { httpClientService } from './common.js';
 
-const TERMINAL_GLOBAL_VARIABLES_TAG = document.getElementById('global-variables');
-const TERMINAL_COMMAND_PREVIEW_TAG = document.getElementById('comand-preview');
-const TERMINAL_TYPING_CONTENT_TAG = document.getElementById('typing-content');
-const TERMINAL_AUTO_COMPLETE_TAG = document.getElementById('auto-complete');
-const TERMINAL_PARAMS_GUIDE_TAG = document.getElementById('params-guide');
-const TERMINAL_VERSION_TAG = document.getElementById('terminal-version');
-const TERMINAL_SCREEN_TAG = document.getElementById('terminal-screen');
+const SCREEN_TAG = document.getElementById('terminal-screen');
+const VERSION_TAG = document.getElementById('terminal-version');
+const PARAMS_GUIDE_TAG = document.getElementById('terminal-args-guide');
+const AUTO_COMPLETE_TAG = document.getElementById('terminal-auto-complete');
+const ENV_VARIABLES_TAG = document.getElementById('terminal-env-variables');
+const TYPING_CONTENT_TAG = document.getElementById('terminal-typing-content');
+const COMMAND_PREVIEW_TAG = document.getElementById('terminal-command-preview');
 
-export const TERMINAL_GLOBAL_VARIABLES = { term: '20192', file: false };
-const TERMINAL_PROMPT_HANDLER = { timeout: {}, execute: {} };
-const TERMINAL_COMMAND_TREE = {};
+const ENV_VARIABLES = { term: '20192', file: false };
+const COMMAND_PATHS = {};
+
+class CommandModel {
+    bin = '';
+    args = {};
+    execute(...args) {}
+}
 
 class Terminal {
-    add_command(tree, execute, params, prompt) {
-        let parts = tree.split(/\s+/);
-        let lastIndex = parts.length - 1;
-        let index = 0;
-        let pointer = TERMINAL_COMMAND_TREE;
-        while (index <= lastIndex) {
-            let part = parts[index];
-            if (pointer[`${part}`] == undefined) pointer[`${part}`] = {};
-            pointer = pointer[`${part}`];
-            index++;
-        }
-        pointer.execute = execute;
-        pointer.executeName = execute.name;
-        pointer.params = params;
-        pointer.prompt = prompt;
+    add_command(command = new CommandModel()) {
+        COMMAND_PATHS[command.bin] = command;
     }
-    get_command(tree = '') {
-        function scanSubCommand(command) {
-            let results = [];
-            for (let key in command) {
-                results.push(key);
-            }
-            return results;
-        }
-        try {
-            if (tree == '') {
-                return scanSubCommand(TERMINAL_COMMAND_TREE);
-            }
-
-            let parts = tree.split(/\s+/);
-            let lastIndex = parts.length - 1;
-            let index = 0;
-            let pointer = TERMINAL_COMMAND_TREE;
-
-            while (index <= lastIndex && !pointer.execute) {
-                let part = parts[index];
-                pointer = pointer[`${part}`];
-                index++;
-            }
-
-            if (pointer.execute) return pointer;
-            return scanSubCommand(pointer);
-        } catch (e) {
-            return undefined;
-        }
+    get_command(bin = '') {
+        let pointer = COMMAND_PATHS[bin];
+        return pointer;
     }
 
     set_typing_value(value = '') {
-        TERMINAL_TYPING_CONTENT_TAG.value = value;
+        TYPING_CONTENT_TAG.value = value;
     }
     get_typing_value() {
-        return TERMINAL_TYPING_CONTENT_TAG.value.replace(/\s+/g, ' ');
+        return TYPING_CONTENT_TAG.value.replace(/\s+/g, ' ');
     }
 
-    /**
-     * hàm này add message từ admin gõ vào lệnh
-     */
-    append_message(value = '') {
+    append_command(value = '') {
         let div = document.createElement('div');
         div.classList.add('typed', 'noSelect');
-        div.innerHTML = `<span class="time">${terminalUtils.now()}</span><span class="content">${value}</span>`;
-        let content = div.querySelector('.content');
-        content.addEventListener('click', (e) => {
-            terminal.set_typing_value(content.textContent);
-        });
-        content.addEventListener('dblclick', (e) => {
-            e.preventDefault();
-            let textContent = content.textContent;
-            terminal.append_message(textContent);
-            setTimeout(() => terminal.execute(textContent), 50);
-        });
-        TERMINAL_SCREEN_TAG.appendChild(div);
-        TERMINAL_SCREEN_TAG.scrollTo(0, TERMINAL_SCREEN_TAG.scrollHeight);
+        div.innerHTML = `<span class="time">${terminalUtils.prefix_now()}</span><span class="content">${value}</span>`;
+        SCREEN_TAG.appendChild(div);
+        SCREEN_TAG.scrollTo(0, SCREEN_TAG.scrollHeight);
     }
 
-    /**
-     * hàm này add response từ hệ thống, request, ...
-     */
-    append_response(message, space = null) {
-        if (typeof message == 'object') message = JSON.stringify(message, null, space);
+    append_response(message = {}, options = { json: false }) {
+        if (options.json) {
+            message = JSON.stringify(message, null, '\t');
+        }
         let div = document.createElement('div');
         div.classList.add('response');
-        div.innerHTML = `<pre class="content">${message}</pre><span class="time">${terminalUtils.now()}</span>`;
-        TERMINAL_SCREEN_TAG.appendChild(div);
-        TERMINAL_SCREEN_TAG.scrollTo(0, TERMINAL_SCREEN_TAG.scrollHeight);
+        div.innerHTML = `<pre class="content">${message}</pre><span class="time">${terminalUtils.prefix_now()}</span>`;
+        SCREEN_TAG.appendChild(div);
+        SCREEN_TAG.scrollTo(0, SCREEN_TAG.scrollHeight);
     }
     append_response_json(message = {}) {
-        terminal.append_response(message, '\t');
+        terminal.append_response(message, { json: true });
     }
 
     execute(command = '') {
-        switch (command.toLocaleUpperCase()) {
-            case 'Y':
-                TERMINAL_PROMPT_HANDLER.execute();
-                clearTimeout(TERMINAL_PROMPT_HANDLER.timeout);
-                terminal.reset_prompt();
-                return;
-            case 'N':
-                clearTimeout(TERMINAL_PROMPT_HANDLER.timeout);
-                terminal.reset_prompt();
-                return;
-        }
-
-        let parts = command.split(/\s+/);
         try {
-            let paramIndex;
-            let tree = '';
-            let pointer = TERMINAL_COMMAND_TREE;
-            for (paramIndex = 0; !pointer.execute; paramIndex++) {
-                let part = parts[paramIndex];
-                pointer = pointer[`${part}`];
-                tree += part + ' ';
+            command = command.trim();
+            for (let bin in COMMAND_PATHS) {
+                if (command.startsWith(bin)) {
+                    let args = command.split(/\s+/);
+                    let command_bin = new CommandModel();
+                    command_bin = COMMAND_PATHS[bin];
+                    let full_command = command_bin.execute.apply(null, args);
+                    return full_command;
+                }
             }
-
-            let paramValues = parts.filter((e, i) => i >= paramIndex);
-            let paramModels = pointer.params;
-
-            paramIndex = 0;
-            for (let key in paramModels) {
-                let value = paramValues[paramIndex];
-                if (!value) paramValues[paramIndex] = TERMINAL_GLOBAL_VARIABLES[`${key}`];
-                paramIndex++;
-            }
-
-            let prompt = pointer.prompt;
-            if (prompt) {
-                terminal.prompt_execute(tree, paramModels, paramValues, prompt.timeout);
-                TERMINAL_PROMPT_HANDLER.execute = () => pointer.execute.apply(null, paramValues);
-                TERMINAL_PROMPT_HANDLER.timeout = setTimeout(TERMINAL_PROMPT_HANDLER.execute, prompt.timeout);
-                return;
-            }
-
-            pointer.execute.apply(null, paramValues);
         } catch (e) {
-            terminal.append_response(`Can't execute: ${command}`);
+            console.error(e);
+            return `Can't execute: ${command}`;
         }
     }
 
-    reset_prompt() {
-        TERMINAL_PROMPT_HANDLER.timeout = {};
-        TERMINAL_PROMPT_HANDLER.execute = console.log;
-    }
-    prompt_execute(tree = '', paramModels = {}, paramValues = [], timeout) {
-        let paramIndex = 0;
-        let preview = tree.trim() + '<br>';
-
-        for (let key in paramModels) {
-            let value = paramValues[paramIndex];
-            let name = key;
-            let type = paramModels[`${name}`].type;
-
-            if (type == 'file') value = value.name;
-            preview += `- <span class="redText">${name}</span> = <span class="redText">${value}</span><br>`;
-
-            paramIndex++;
-        }
-
-        preview = preview.trim() + `(<b class="yes-no">Y</b>|<b class="yes-no">N</b>)? (${timeout}ms)`;
-
-        let div = document.createElement('div');
-        div.classList.add('prompt', 'dadFlexCenter', 'noSelect');
-        div.innerHTML = `<span class="content">${preview}</span>`;
-        Array.from(div.querySelectorAll('.yes-no')).forEach((each) => {
-            each.addEventListener('click', () => {
-                let textContent = each.textContent;
-                terminal.append_message(textContent);
-                terminal.execute(textContent);
-            });
-        });
-
-        TERMINAL_SCREEN_TAG.appendChild(div);
-        TERMINAL_SCREEN_TAG.scrollTo(0, TERMINAL_SCREEN_TAG.scrollHeight);
-    }
-
-    show_global_variables() {
+    show_env_variables() {
         let innerHTML = '';
-        for (let key in TERMINAL_GLOBAL_VARIABLES) {
-            let value = terminal.get_global_variable(key);
+        for (let key in ENV_VARIABLES) {
+            let value = terminal.get(key);
+            if (key == 'file') value = value.name;
             innerHTML += `<span class="variable"><span class="name">${key}</span><span class="value">${value}</span></span>`;
         }
-        TERMINAL_GLOBAL_VARIABLES_TAG.innerHTML = innerHTML;
+        ENV_VARIABLES_TAG.innerHTML = innerHTML;
     }
-    get_global_variable(name) {
-        if (name == 'file') return TERMINAL_GLOBAL_VARIABLES.file.name;
-        return TERMINAL_GLOBAL_VARIABLES[`${name}`];
+    get(name) {
+        return ENV_VARIABLES[name];
+    }
+    set(name, value) {
+        if (name == 'file') return false;
+        ENV_VARIABLES[name] = value;
+        return true;
     }
 
+    isSelectingAutoComplete = false;
     selected_auto_complete_index = -1;
 
     set_command_preview(value = '') {
-        TERMINAL_COMMAND_PREVIEW_TAG.textContent = value;
+        COMMAND_PREVIEW_TAG.textContent = value;
     }
     clear_command_preview() {
-        TERMINAL_COMMAND_PREVIEW_TAG.textContent = '';
+        COMMAND_PREVIEW_TAG.textContent = '';
     }
 
     gen_params_guide(executeName, params = {}) {
-        TERMINAL_PARAMS_GUIDE_TAG.style.display = null;
+        PARAMS_GUIDE_TAG.style.display = null;
         let paramsHTML = '';
         for (let key in params) {
             let param = params[`${key}`];
@@ -229,93 +121,35 @@ class Terminal {
         }
         paramsHTML = paramsHTML.trim().slice(0, -1);
 
-        TERMINAL_PARAMS_GUIDE_TAG.innerHTML = `<span class="executeName">${executeName}</span>(${paramsHTML})`;
+        PARAMS_GUIDE_TAG.innerHTML = `<span class="executeName">${executeName}</span>(${paramsHTML})`;
     }
     clear_params_guide() {
-        TERMINAL_PARAMS_GUIDE_TAG.innerHTML = '';
-        TERMINAL_PARAMS_GUIDE_TAG.style.display = 'none';
+        PARAMS_GUIDE_TAG.innerHTML = '';
+        PARAMS_GUIDE_TAG.style.display = 'none';
     }
 
     gen_auto_complete(command = '') {
-        terminal.clear_params_guide();
-        terminal.clear_auto_complete();
-
         if (command.match(/^\s*$/)) return;
-
-        let parts = command.split(/\s+/);
-        let lastIndex = parts.length - 1;
-
-        try {
-            let pointer = TERMINAL_COMMAND_TREE;
-            let paramIndex = 0;
-
-            let currentCommand = '';
-            while (paramIndex < lastIndex && !pointer.execute) {
-                let part = parts[paramIndex];
-                pointer = pointer[`${part}`];
-                currentCommand += part + ' ';
-                paramIndex++;
+        for (let bin in COMMAND_PATHS) {
+            if (bin.startsWith(command)) {
+                let div = document.createElement('div');
+                div.classList.add('entry', 'dadFlexCenterVer');
+                div.innerHTML = `<span class="cursor"></span><span class="value">${bin}</span>`;
+                div.addEventListener('click', () => {
+                    terminal.set_typing_value(div.textContent);
+                    terminal.clear_auto_complete();
+                    terminal.clear_command_preview();
+                });
+                AUTO_COMPLETE_TAG.appendChild(div);
             }
-
-            if (pointer.execute) {
-                let nextParamIndex = lastIndex - paramIndex;
-                let paramModels = JSON.parse(JSON.stringify(pointer.params));
-                let i = 0;
-
-                for (let key in paramModels) {
-                    let param = paramModels[`${key}`];
-
-                    if (i == nextParamIndex) param.next = true;
-                    let value = '';
-
-                    if (param.type == '...any') {
-                        param.next = true;
-                        value = parts
-                            .filter((e, i) => i >= paramIndex)
-                            .reduce((t, e) => t + e + ' ', '')
-                            .trim();
-                    } else {
-                        value = parts[paramIndex + i];
-                    }
-
-                    if (value) {
-                        param.value = value;
-                    } else {
-                        param.value = terminal.get_global_variable(key);
-                    }
-                    ++i;
-                }
-
-                terminal.gen_params_guide(pointer.executeName, paramModels);
-                return;
-            }
-
-            let lastPart = parts[lastIndex];
-            let regex = new RegExp('^' + lastPart);
-            for (let subCommand in pointer) {
-                if (subCommand.match(regex)) {
-                    let div = document.createElement('div');
-                    div.classList.add('entry', 'dadFlexCenterVer');
-                    div.addEventListener('click', () => {
-                        terminal.set_typing_value(div.textContent);
-                        terminal.clear_auto_complete();
-                    });
-                    let value = (currentCommand + subCommand).trim().replace(/\s+/g, ' ');
-                    div.innerHTML = `<span class="cursor"></span><span class="value">${value}</span>`;
-                    TERMINAL_AUTO_COMPLETE_TAG.appendChild(div);
-                }
-            }
-        } catch (e) {
-            // console.error(e);
         }
     }
     clear_auto_complete() {
-        TERMINAL_AUTO_COMPLETE_TAG.innerHTML = '';
-        terminal.clear_command_preview();
+        AUTO_COMPLETE_TAG.innerHTML = '';
     }
 
     toggle_selecting_auto_complete() {
-        let entries = Array.from(TERMINAL_AUTO_COMPLETE_TAG.querySelectorAll('.entry'));
+        let entries = Array.from(AUTO_COMPLETE_TAG.querySelectorAll('.entry'));
         let maxIndex = Math.max(0, entries.length - 1);
         let minIndex = 0;
         if (terminal.selected_auto_complete_index > maxIndex) {
@@ -331,13 +165,13 @@ class Terminal {
                 let childStart = entry.offsetTop;
                 let childEnd = childStart + parseFloat(getComputedStyle(entry).height);
 
-                let dadStart = TERMINAL_AUTO_COMPLETE_TAG.scrollTop;
-                let dadEnd = dadStart + parseFloat(getComputedStyle(TERMINAL_AUTO_COMPLETE_TAG).height);
+                let dadStart = AUTO_COMPLETE_TAG.scrollTop;
+                let dadEnd = dadStart + parseFloat(getComputedStyle(AUTO_COMPLETE_TAG).height);
 
                 if (childStart < dadStart) {
-                    TERMINAL_AUTO_COMPLETE_TAG.scrollBy(0, childStart - dadStart);
+                    AUTO_COMPLETE_TAG.scrollBy(0, childStart - dadStart);
                 } else if (childEnd > dadEnd) {
-                    TERMINAL_AUTO_COMPLETE_TAG.scrollBy(0, childEnd - dadEnd);
+                    AUTO_COMPLETE_TAG.scrollBy(0, childEnd - dadEnd);
                 }
 
                 terminal.set_command_preview(entry.textContent);
@@ -350,7 +184,7 @@ class Terminal {
      * hàm này lấy giá trị đang select của auto complete và nhét vào typing value
      */
     fetch_selecting_auto_complete() {
-        let entry = TERMINAL_AUTO_COMPLETE_TAG.querySelectorAll('.entry')[terminal.selected_auto_complete_index];
+        let entry = AUTO_COMPLETE_TAG.querySelectorAll('.entry')[terminal.selected_auto_complete_index];
         if (entry) {
             terminal.set_typing_value(entry.textContent.trim());
         }
@@ -359,7 +193,7 @@ class Terminal {
 export const terminal = new Terminal();
 
 class TerminalUtils {
-    now() {
+    prefix_now() {
         let now = new Date();
         let hour = now.getHours();
         let minute = now.getMinutes();
@@ -371,82 +205,85 @@ class TerminalUtils {
         return hour + ':' + minute + ':' + second;
     }
 }
-export const terminalUtils = new TerminalUtils();
+const terminalUtils = new TerminalUtils();
 
-function init_terminal() {
-    terminal.show_global_variables();
-    let isAutoCompleteSelecting = false;
+terminal.show_env_variables();
 
-    TERMINAL_TYPING_CONTENT_TAG.addEventListener('keydown', (e) => {
-        let command = terminal.get_typing_value();
+window.addEventListener('drop', (e) => {
+    e.preventDefault();
 
-        switch (e.key) {
-            case 'Enter':
-                e.preventDefault();
-                if (isAutoCompleteSelecting) {
-                    terminal.fetch_selecting_auto_complete();
-                    isAutoCompleteSelecting = false;
-                    return;
-                }
-                terminal.clear_auto_complete();
-                terminal.clear_params_guide();
+    let dropedFile = e.dataTransfer.files[0];
+    ENV_VARIABLES.file = dropedFile;
+    terminal.append_command('drop file: ' + dropedFile.name);
 
-                TERMINAL_TYPING_CONTENT_TAG.value = '';
-                if (command.match(/^\s*$/)) return;
-
-                terminal.append_message(command);
-                terminal.execute(command);
-                break;
-
-            case 'Tab':
-                e.preventDefault();
-                isAutoCompleteSelecting = false;
-                terminal.fetch_selecting_auto_complete();
-                break;
-
-            case 'ArrowDown':
-                e.preventDefault();
-                isAutoCompleteSelecting = true;
-                terminal.selected_auto_complete_index++;
-                setTimeout(terminal.toggle_selecting_auto_complete, 0);
-                break;
-
-            case 'ArrowUp':
-                e.preventDefault();
-                isAutoCompleteSelecting = true;
-                terminal.selected_auto_complete_index--;
-                setTimeout(terminal.toggle_selecting_auto_complete, 0);
-                break;
-
-            default:
-                isAutoCompleteSelecting = false;
-                setTimeout(() => {
-                    let command = terminal.get_typing_value();
-                    terminal.gen_auto_complete(command);
-                    terminal.toggle_selecting_auto_complete();
-                }, 0);
-                break;
-        }
-    });
-    TERMINAL_GLOBAL_VARIABLES_TAG.addEventListener('mousedown', (e) => {
-        e.preventDefault();
-        TERMINAL_TYPING_CONTENT_TAG.focus();
-    });
-
-    window.addEventListener('drop', (e) => {
-        e.preventDefault();
-
-        let dropedFile = e.dataTransfer.files[0];
-        TERMINAL_GLOBAL_VARIABLES.file = dropedFile;
-        terminal.append_message('Drop File: ' + dropedFile.name);
-
-        terminal.show_global_variables();
-    });
-    window.addEventListener('dragover', (e) => {
-        e.preventDefault();
-    });
-}
-httpClientService.ajax({ url: '/terminal.version.txt', method: 'GET' }, function (data) {
-    if (data) TERMINAL_VERSION_TAG.innerText = data;
+    terminal.show_env_variables();
 });
-setTimeout(init_terminal, 0);
+window.addEventListener('dragover', (e) => {
+    e.preventDefault();
+});
+
+TYPING_CONTENT_TAG.addEventListener('keydown', (e) => {
+    let command = terminal.get_typing_value();
+
+    switch (e.key) {
+        case 'Enter':
+            e.preventDefault();
+            if (terminal.isSelectingAutoComplete) {
+                terminal.fetch_selecting_auto_complete();
+                terminal.isSelectingAutoComplete = false;
+                return;
+            }
+            terminal.clear_auto_complete();
+            terminal.clear_command_preview();
+
+            terminal.clear_params_guide();
+
+            TYPING_CONTENT_TAG.value = '';
+            if (command.match(/^\s*$/)) return;
+
+            let full_command = terminal.execute(command);
+            terminal.append_command(full_command);
+            break;
+
+        case 'Tab':
+            e.preventDefault();
+            terminal.isSelectingAutoComplete = false;
+            terminal.fetch_selecting_auto_complete();
+            break;
+
+        case 'ArrowDown':
+            e.preventDefault();
+            terminal.isSelectingAutoComplete = true;
+            terminal.selected_auto_complete_index++;
+            setTimeout(terminal.toggle_selecting_auto_complete, 0);
+            break;
+
+        case 'ArrowUp':
+            e.preventDefault();
+            terminal.isSelectingAutoComplete = true;
+            terminal.selected_auto_complete_index--;
+            setTimeout(terminal.toggle_selecting_auto_complete, 0);
+            break;
+
+        default:
+            terminal.isSelectingAutoComplete = false;
+            setTimeout(() => {
+                let command = terminal.get_typing_value();
+                terminal.clear_params_guide();
+                terminal.clear_auto_complete();
+                terminal.clear_command_preview();
+                terminal.gen_auto_complete(command);
+                terminal.toggle_selecting_auto_complete();
+            }, 0);
+            break;
+    }
+});
+
+ENV_VARIABLES_TAG.addEventListener('mousedown', (e) => {
+    e.preventDefault();
+    TYPING_CONTENT_TAG.focus();
+});
+
+httpClientService.ajax({ url: '/terminal.version.txt', method: 'GET' }, function (data) {
+    if (data) VERSION_TAG.innerText = data;
+});
