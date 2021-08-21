@@ -2,7 +2,11 @@
 
 //SECTION: request
 class HttpClientService {
-    async ajax(option = { method: '', url: '', headers: {}, body: {} }, doneHandler = (data) => data, errorHandler = () => {}) {
+    async ajax(
+        option = { method: '', url: '', headers: {}, body: {} },
+        doneHandler = (data) => data,
+        errorHandler = console.error
+    ) {
         let promise = new Promise((resolve, reject) => {
             try {
                 let xhttp = new XMLHttpRequest();
@@ -38,7 +42,11 @@ class HttpClientService {
         promise.then(doneHandler).catch(errorHandler);
         return promise;
     }
-    async uploadFile(option = { url: '', headers: [{ name: '', value: '' }] }, file, done = () => {}) {
+    async uploadFile(
+        option = { url: '', headers: [{ name: '', value: '' }] },
+        file,
+        done = () => {}
+    ) {
         let data = new FormData();
         data.append('file', file);
 
@@ -70,7 +78,10 @@ class HttpClientService {
         switch (method) {
             case 'GET':
             case 'DELETE':
-                let queryString = httpRequestUtils.createQueryStringParallel(pattern['params'], params);
+                let queryString = httpRequestUtils.createQueryStringParallel(
+                    pattern['params'],
+                    params
+                );
                 promise = this.ajax({ method: method, url: url + '?' + queryString });
                 break;
 
@@ -119,19 +130,3 @@ class HttpRequestUtils {
     }
 }
 export const httpRequestUtils = new HttpRequestUtils();
-
-//SECTION: local storage
-class LocalStorageService {
-    set(prefix = '', name = '', data) {
-        if (typeof data == 'object') data = JSON.stringify(data);
-        localStorage.setItem(prefix + '-' + name, data);
-    }
-    get(prefix = '', name = '') {
-        let data = localStorage.getItem(prefix + '-' + name);
-        try {
-            data = JSON.parse(data);
-        } catch (e) {}
-        return data;
-    }
-}
-export const localStorageService = new LocalStorageService();

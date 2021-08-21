@@ -1,14 +1,11 @@
 'use strict';
 
-import { httpClientService, localStorageService } from './common.js';
+import { httpClientService } from './common.js';
 
 var isServiceWorkderAvailable = false;
-const LOCALSTORAGE_PREFIX = 'webapp';
 const CACHE_NAME = 'webapp';
 const CACHED_URLS = [];
 const SERVICE_WORKER_FILE = 'app.service-worker.v1.js';
-var CLIENT_APP_VERSION = localStorageService.get(LOCALSTORAGE_PREFIX, 'version');
-var APP_NEWEST_VERSION = CLIENT_APP_VERSION;
 export const AppConfig = {
     worker_config: {
         service0: {
@@ -152,7 +149,6 @@ class App {
             .updateCaches()
             .then(function () {
                 console.log('update success');
-                localStorageService.set(LOCALSTORAGE_PREFIX, 'version', APP_NEWEST_VERSION);
             })
             .catch(function () {
                 console.log('update failed');
@@ -173,10 +169,9 @@ if (isServiceWorkderAvailable) {
     cachesUtils.clearCaches();
     serviceWorkerUtils.unregisterServiceWorkers();
 }
+// localStorage.clear();
 
-httpClientService.ajax({ url: '/app.version.txt', method: 'GET' }, function (data) {
-    if (data) APP_NEWEST_VERSION = data;
-});
+httpClientService.ajax({ url: '/app.version.txt', method: 'GET' }, console.log);
 httpClientService.ajax({ url: '/worker-config.json', method: 'GET' }, function (response) {
     if (response) AppConfig.worker_config = response;
 });

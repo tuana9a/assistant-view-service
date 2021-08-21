@@ -107,9 +107,10 @@
     height: 100%;
 }
 .renderTable .column .classRender .classContainer .classProps {
+    width: 100%;
     display: flex;
     flex-wrap: wrap;
-    justify-content: space-evenly;
+    justify-content: center;
     align-items: center;
 
     height: 100%;
@@ -119,6 +120,7 @@
     font-size: 12px;
 }
 .renderTable .column .classRender .classContainer .classProps .classProp {
-    width: max-content;
+    /* width: max-content; */
     /* width: 100%; */
+    min-width: 50%;
 }

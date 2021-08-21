@@ -66,21 +66,25 @@
             <!-- SECTION: INPUT -->
             <div class="section">
                 <div class="section">
-                    <h5 style="color: var(--green_neon)">
-                        <span>nhập vào mã lớp (một hoặc nhiều)</span><br>
-                        <span>VD: "20900", "14600 - lớp xxx", "14600, 20900 LT + BT"</span><br>
-                        <span>sau đó chọn trong kết quả tìm kiếm</span><br>
-                        <span>cuối cùng nhấn button để xem</span><br>
-                    </h5>
-                    <div class="dadFlexCenter positionRelative">
-                        <input class="child60" type="text" autocomplete="off" id="inputClassId" placeholder="ma lop" />
+                    <div class="section">
+                        <h5 style="color: var(--green_neon)">
+                            <span>nhập vào mã lớp (một hoặc nhiều)</span><br>
+                            <span>VD: "20900", "14600 - lớp xxx", "14600, 20900 LT + BT"</span><br>
+                            <span>sau đó chọn trong kết quả tìm kiếm</span><br>
+                            <span>cuối cùng nhấn button để xem</span><br>
+                        </h5>
+                    </div>
+                    <div class="section dadFlexCenter positionRelative">
+                        <input class="child60" type="text" autocomplete="off" id="inputSearchClass" placeholder="ma lop" />
                         <div class="positionAbsolute dadFlexWrap child60" id="guessIds" style="display: none;">
                             <!-- <div class="classId">
                                     <span onclick="addClassId(this.textContent);this.parentElement.remove()" class="maLop">1234</span>
                                 </div> -->
                         </div>
                     </div>
-                    <h4 style="color: var(--green_neon);">or</h4>
+                    <div class="dadFlexCenter">
+                        <span class="noSelect" style="color: var(--green_neon);">or</span>
+                    </div>
                     <div class="dadFlexCenter">
                         <div class="section dadFlexCenter positionRelative">
                             <span class="noSelect" style="color: var(--green_neon)">
@@ -121,14 +125,14 @@
                 <input type="text" id="termPreview" placeholder="ky hoc">
             </div>
             <!-- SECTION: WEEK -->
-            <div class="weekToggle dadFlexCenter">
+            <div class="section weekToggle dadFlexCenter">
                 <div class="section">
                     <div class="dadFlexWrapCenterHor">
                         <button class="neonButtonClickSimple toggleWeekPreview" data-value="-1">
                             <div class="weekPreview_prev"></div>
                         </button>
                         <span class="weekPreviewTitle">Week</span>
-                        <span id="weekPreview">0</span>
+                        <input type="text" id="weekPreview" value="0">
                         <button class="neonButtonClickSimple toggleWeekPreview" data-value="1">
                             <div class="weekPreview_next"></div>
                         </button>

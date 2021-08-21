@@ -9,7 +9,7 @@ function insert_classes(...args) {
     let term = args[2] || terminal.get('term');
     let file = terminal.get('file');
     httpClientService.uploadFile(
-        { url: AppConfig.worker_config.service2.address + `/api/admin/lop-dang-ky?term=${term}` },
+        { url: AppConfig.worker_config.service2.address + `/api/insert/many/lop-dang-ky?term=${term}` },
         file,
         terminal.append_response_json
     );
@@ -20,7 +20,10 @@ terminal.add_command({ bin: 'delete classes', execute: delete_classes, args: {} 
 function delete_classes(...args) {
     let term = args[2] || terminal.get('term');
     httpClientService.ajax(
-        { url: AppConfig.worker_config.service2.address + '/api/admin/lop-dang-ky?term=' + term, method: 'DELETE' },
+        {
+            url: AppConfig.worker_config.service2.address + '/api/delete/many/lop-dang-ky?term=' + term,
+            method: 'DELETE'
+        },
         terminal.append_response_json
     );
     return `delete classes ${term}`;

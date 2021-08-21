@@ -1,7 +1,7 @@
 'use strict';
 
 import { AppConfig } from './app.js';
-import { httpClientService, localStorageService } from './common.js';
+import { httpClientService } from './common.js';
 import { utils } from './common.utils.js';
 import { registerPreviewUtils } from './register-preview.utils.js';
 
@@ -10,7 +10,6 @@ const TABLE_ROW_HEIGHT = 30;
 
 const NUM_OF_HOUR = 24;
 const NUM_OF_DAYWEEK = 7;
-const PREFIX_LOCAL_STORAGE_REGISTER_PREVIEW = 'register-preview';
 
 //EXPLAIN: mảng lữu dữ liệu class hiện tại
 var TIMETABLE_DATA_PREVIEWING_CLASSES = [];
@@ -21,21 +20,20 @@ var TIMETABLE_DATA_DAY_WEEK_ELEMENTS = [];
 //EXPLAIN: mảng lưu hourOfDay
 var TIMETABLE_DATA_DAY_WEEK_ELEMENTS_WITH_HOUR_OF_DAYS = [[], [], [], [], [], [], []];
 
-const CLASS_IDS_TAG = document.getElementById('classIds');
-const GUESS_CLASS_IDS_TAG = document.getElementById('guessIds');
+const classIdsTag = document.getElementById('classIds');
+const guessClassIdsTag = document.getElementById('guessIds');
 
-const TERM_PREVIEW_TAG = document.getElementById('termPreview');
-const WEEK_PREVIEW_TAG = document.getElementById('weekPreview');
+const termPreviewTag = document.getElementById('termPreview');
+const weekPreviewTag = document.getElementById('weekPreview');
 
-const INPUT_MSSV_TAG = document.getElementById('inputMssv');
-const INPUT_CLASS_ID_TAG = document.getElementById('inputClassId');
-const RENDER_TABLE_TAG = document.getElementById('renderTable');
+const renderTableTag = document.getElementById('renderTable');
+const inputSearchClassTag = document.getElementById('inputSearchClass');
 
-const PAGE_MESSAGES_CONTENT_TAG = document.getElementById('pageMessagesContent');
-const OPEN_PAGE_MESSAGES_TAG = document.getElementById('openPageMessages');
-const CLOSE_PAGE_MESSAGES_TAG = document.getElementById('closePageMessages');
+const pageMessagesContentTag = document.getElementById('pageMessagesContent');
+const openPageMessagesTag = document.getElementById('openPageMessages');
+const closePageMessagesTag = document.getElementById('closePageMessages');
 
-var REGISTER_PREVIEW_VERSION = 'v2020.07';
+var VERSION = 'v2020.07';
 
 class LopDangKy {
     ma_lop = -1;
@@ -61,6 +59,7 @@ class LopDangKy {
 class HiddenUtils {
     execute_order(number) {
         let autoRegisterTag = document.getElementById('auto-register');
+        let inputMssvTag = document.getElementById('inputMssv');
         let inputPasswordTag = document.getElementById('inputPassword');
 
         switch (number) {
@@ -71,14 +70,14 @@ class HiddenUtils {
             case 69:
                 autoRegisterTag.classList.add('hidden');
 
-                let username = userInputManager.getInputMssv_Value();
+                let username = inputMssvTag.value;
                 let password = inputPasswordTag.value;
 
                 let beginDate = document.querySelector('#inputDate').value;
                 let beginTime = document.querySelector('#inputTime').value;
                 let begin = new Date(beginDate + ' ' + beginTime).getTime();
 
-                let classIds = userInputManager.getClassIdsFromUserInput();
+                let classIds = userInputManager.getClassIds();
                 let data = { username, password, classIds, begin, type: 'dk-sis' };
                 data = JSON.stringify(data, null, '  ');
                 let html = `
@@ -88,7 +87,7 @@ class HiddenUtils {
                         <div class=""><span style="cursor: pointer; word-wrap: break-word;">${data}</span></div>
                     </div>
                 `;
-                pageMessageManager.addMessageWithListener(html, {
+                pageMessageUtils.addMessageWithListener(html, {
                     event: 'click',
                     listener: function (e) {
                         this.remove();
@@ -100,7 +99,7 @@ class HiddenUtils {
                                 console.error('Async: Could not copy: ', err);
                             }
                         );
-                        pageMessageManager.updateNumberMessages();
+                        pageMessageUtils.updateNumberMessages();
                     }
                 });
                 break;
@@ -109,49 +108,25 @@ class HiddenUtils {
 }
 const hiddenUtils = new HiddenUtils();
 
-/**
- * quản lí data lưu vào local storage
- */
-class LocalStorageRegisterPreviewService {
-    set(name = '', value) {
-        localStorageService.set(PREFIX_LOCAL_STORAGE_REGISTER_PREVIEW, name, value);
+class InputSearchClassUtils {
+    getValue() {
+        return inputSearchClassTag.value;
     }
-    get(name = '') {
-        return localStorageService.get(PREFIX_LOCAL_STORAGE_REGISTER_PREVIEW, name);
+    setValue(value = '') {
+        inputSearchClassTag.value = value;
+    }
+    clearValue() {
+        inputSearchClassTag.value = '';
     }
 }
-const localStorageRegisterPreviewManager = new LocalStorageRegisterPreviewService();
+const inputSearchClassUtils = new InputSearchClassUtils();
 
 /**
  * quản lí việc input của người dùng
  */
 class UserInputManager {
-    getInputClassIdValue() {
-        return INPUT_CLASS_ID_TAG.value;
-    }
-    clearInputClassIdValue() {
-        INPUT_CLASS_ID_TAG.value = '';
-    }
-
-    getInputMssv_Value() {
-        return INPUT_MSSV_TAG.value;
-    }
-    setInputMssv_Value(value = '') {
-        INPUT_MSSV_TAG.value = value;
-    }
-
-    getValueArrayFromUserInput() {
-        let result = Array.from(CLASS_IDS_TAG.querySelectorAll('.input')).map((e) => e.textContent.trim());
-        return result;
-    }
-    getClassIdsFromUserInput() {
-        let result = [];
-        userInputManager.getValueArrayFromUserInput().forEach((value) => {
-            //EXPLAIN: vì 1 input có thể cho phép nhiều class (VD: 1235, 1234 - lớp LT, BT) ...
-            let ids = registerPreviewUtils.extractClassIdsFromString(value);
-            result.push(...ids);
-        });
-        return result;
+    getClassIds() {
+        return Array.from(classIdsTag.querySelectorAll('.input')).map((e) => e.textContent.trim());
     }
 }
 const userInputManager = new UserInputManager();
@@ -159,41 +134,32 @@ const userInputManager = new UserInputManager();
 /**
  * quản lí các thư liên quan tới tuần
  */
-class WeekPreviewManager {
-    updateWhenChangeWeekPreview(delta = 0) {
-        delta = parseInt(delta);
-        let weekPreview = weekPreviewManager.getWeekPreviewValue() + delta;
-        let termPreview = termPreviewManager.getTermPreviewValue();
-
-        weekPreviewManager.setWeekPreviewValue(weekPreview);
-        timeTableRenderSerivce.renderClasses(TIMETABLE_DATA_PREVIEWING_CLASSES, termPreview);
-        localStorageRegisterPreviewManager.set('week-preview', weekPreview);
+class WeekPreviewUtils {
+    setValue(value = -1) {
+        value = parseInt(value) || 0;
+        weekPreviewTag.value = value;
     }
-    setWeekPreviewValue(value = -1) {
-        value = parseInt(value);
-        WEEK_PREVIEW_TAG.textContent = value;
-    }
-    getWeekPreviewValue() {
-        let value = parseInt(WEEK_PREVIEW_TAG.textContent);
+    getValue() {
+        let value = parseInt(weekPreviewTag.value) || 0;
         return value;
     }
 }
-const weekPreviewManager = new WeekPreviewManager();
+const weekPreviewUtils = new WeekPreviewUtils();
 
 /**
  * quản lí các thứ liên quan tới kỳ học
  */
-class TermPreviewManager {
-    getTermPreviewValue() {
-        return TERM_PREVIEW_TAG.value;
+class TermPreviewUtils {
+    getValue() {
+        return termPreviewTag.value;
     }
-    setTermPreviewValue(value = '') {
-        TERM_PREVIEW_TAG.value = value;
+    setValue(value = '') {
+        termPreviewTag.value = value || '';
     }
 }
-const termPreviewManager = new TermPreviewManager();
+const termPreviewUtils = new TermPreviewUtils();
 
-class PageMessageManager {
+class PageMessageUtils {
     clearNotificationQueue() {
         let messageQueueTag = document.getElementById('messageQueue');
         messageQueueTag.innerHTML = '';
@@ -227,7 +193,7 @@ class PageMessageManager {
         if (option && option.event && option.listener) {
             div.addEventListener(option.event, option.listener);
         }
-        pageMessageManager.updateNumberMessages();
+        pageMessageUtils.updateNumberMessages();
     }
     addNotHaveTimeClass(lopDangKy = new LopDangKy()) {
         let html = `
@@ -238,7 +204,7 @@ class PageMessageManager {
                 <div class="">${lopDangKy.ghi_chu}</div>
             </div>
         `;
-        pageMessageManager.addMessageWithListener(html);
+        pageMessageUtils.addMessageWithListener(html);
     }
     addOverlapTimeClasses(classes = [new LopDangKy()]) {
         let html = classes.reduce(function (total, lopDangKy) {
@@ -266,15 +232,15 @@ class PageMessageManager {
                 </div>
             </div>
         `;
-        pageMessageManager.addMessageWithListener(html);
+        pageMessageUtils.addMessageWithListener(html);
     }
 }
-const pageMessageManager = new PageMessageManager();
+const pageMessageUtils = new PageMessageUtils();
 
 /**
  * quản lí các element liên quan tới lớp đăng kí
  */
-class ElementsManager {
+class ClassIdsElementsUtils {
     addClassId(value) {
         function createClassIdDiv(value) {
             let div = document.createElement('div');
@@ -288,62 +254,35 @@ class ElementsManager {
             });
             return div;
         }
-        CLASS_IDS_TAG.appendChild(createClassIdDiv(value));
+        classIdsTag.appendChild(createClassIdDiv(value));
     }
     addGuessId(value) {
-        function createGuessIdDiv(value) {
-            let div = document.createElement('div');
-            div.classList.add('classId', 'noSelect');
-            div.innerHTML = `<span class="maLop">${value}</span>`;
-            div.addEventListener('click', (e) => {
-                elementsManager.addClassId(div.textContent);
-                div.remove();
-            });
-            return div;
-        }
-        GUESS_CLASS_IDS_TAG.appendChild(createGuessIdDiv(value));
+        let div = document.createElement('div');
+        div.classList.add('classId', 'noSelect');
+        div.innerHTML = `<span class="maLop">${value}</span>`;
+        div.addEventListener('click', (e) => {
+            classIdsElementsUtils.addClassId(div.textContent);
+            div.remove();
+            if (guessClassIdsTag.querySelectorAll('.classId').length == 0) {
+                classIdsElementsUtils.hideGuessIds();
+            }
+        });
+        guessClassIdsTag.appendChild(div);
     }
     cleaClassIds() {
-        CLASS_IDS_TAG.innerHTML = '';
+        classIdsTag.innerHTML = '';
     }
     clearGuessIds() {
-        GUESS_CLASS_IDS_TAG.innerHTML = '';
+        guessClassIdsTag.innerHTML = '';
     }
     hideGuessIds() {
-        GUESS_CLASS_IDS_TAG.style.display = 'none';
+        guessClassIdsTag.style.display = 'none';
     }
     showGuessIds() {
-        GUESS_CLASS_IDS_TAG.style.display = null;
+        guessClassIdsTag.style.display = null;
     }
 }
-const elementsManager = new ElementsManager();
-
-class RegisterPreviewRequests {
-    async findMany(term = '', ids = [], options = { fuzzy: false }) {
-        ids = ids.map((e) => utils.fromAnyToNumber(e));
-        let filter = { ma_lop: { $in: ids } };
-        if (options.fuzzy) {
-            filter = {
-                $or: ids.map(function (id) {
-                    let length = String(id).length;
-                    let missing = 6 - length;
-                    let filter = { ma_lop: id };
-                    if (missing > 0) {
-                        let delta = Math.pow(10, missing);
-                        let gte = id * delta;
-                        let lte = gte + delta;
-                        filter = { ma_lop: { $gte: gte, $lte: lte } };
-                    }
-                    return filter;
-                })
-            };
-        }
-
-        let url = AppConfig.worker_config.service2.address + `/api/public/lop-dang-ky?term=${term}`;
-        return httpClientService.ajax({ url: url, method: 'POST', body: filter });
-    }
-}
-const registerPreviewRequests = new RegisterPreviewRequests();
+const classIdsElementsUtils = new ClassIdsElementsUtils();
 
 // time table
 class TimeTableUtils {
@@ -356,13 +295,13 @@ class TimeTableUtils {
             let temp = week.split('-');
             switch (temp.length) {
                 case 1:
-                    if (parseInt(week) == weekPreviewManager.getWeekPreviewValue()) return true;
+                    if (parseInt(week) == weekPreviewUtils.getValue()) return true;
                     break;
                 case 2:
                     let startWeek = parseInt(temp[0]);
                     let endWeek = parseInt(temp[1]);
                     for (let i = startWeek; i <= endWeek; i++) {
-                        if (i == weekPreviewManager.getWeekPreviewValue()) return true;
+                        if (i == weekPreviewUtils.getValue()) return true;
                     }
                     break;
                 default:
@@ -418,7 +357,7 @@ class TimeTableUtils {
                 if (existOverlap) {
                     overlapHandeledClasses.push(main_class);
                     overlapClasses.push(main_class);
-                    pageMessageManager.addOverlapTimeClasses(overlapClasses);
+                    pageMessageUtils.addOverlapTimeClasses(overlapClasses);
                 }
             }
         }
@@ -444,15 +383,17 @@ class TimeTableCleaner {
 const timeTableCleaner = new TimeTableCleaner();
 
 // rendering
-class TimeTableRenderService {
+class TimeTableRenderUtils {
     initTable(dropHours = new Set(), TABLE_ROW_HEIGHT = 23) {
-        RENDER_TABLE_TAG.innerHTML = ``;
+        renderTableTag.innerHTML = ``;
 
         function createHourIndexColumn(dropHours = new Set()) {
             let column = document.createElement('div');
             column.classList.add('column', 'indexHour');
 
-            column.innerHTML = `<div class="columName" style="height:${TABLE_ROW_HEIGHT + 'px'}"><span></span></div>`;
+            column.innerHTML = `<div class="columName" style="height:${
+                TABLE_ROW_HEIGHT + 'px'
+            }"><span></span></div>`;
             for (let i = 0; i < NUM_OF_HOUR; i++) {
                 let hourOfDay = document.createElement('div');
                 hourOfDay.classList.add('hourOfDay', `_${i}h`, 'dadFlexCenter');
@@ -516,10 +457,14 @@ class TimeTableRenderService {
             return column;
         }
 
-        RENDER_TABLE_TAG.appendChild(createHourIndexColumn(dropHours)); //EXPLAIN: cột chỉ số thời gian
-        [2, 3, 4, 5, 6, 7, 8].forEach((day) => RENDER_TABLE_TAG.appendChild(createDayWeekColumn(day, dropHours)));
+        renderTableTag.appendChild(createHourIndexColumn(dropHours)); //EXPLAIN: cột chỉ số thời gian
+        [2, 3, 4, 5, 6, 7, 8].forEach((day) =>
+            renderTableTag.appendChild(createDayWeekColumn(day, dropHours))
+        );
 
-        TIMETABLE_DATA_DAY_WEEK_ELEMENTS = Array.from(RENDER_TABLE_TAG.querySelectorAll('.dayOfWeek'));
+        TIMETABLE_DATA_DAY_WEEK_ELEMENTS = Array.from(
+            renderTableTag.querySelectorAll('.dayOfWeek')
+        );
         for (let i = 0; i < NUM_OF_DAYWEEK; i++) {
             TIMETABLE_DATA_DAY_WEEK_ELEMENTS_WITH_HOUR_OF_DAYS[i] = Array.from(
                 TIMETABLE_DATA_DAY_WEEK_ELEMENTS[i].querySelectorAll('.hourOfDay')
@@ -534,7 +479,7 @@ class TimeTableRenderService {
     renderLopDangKy(lopDangKy = new LopDangKy()) {
         let tuanHoc = lopDangKy.tuan_hoc;
         if (timeTableUtils.notHaveClassTime(tuanHoc)) {
-            pageMessageManager.addNotHaveTimeClass(lopDangKy);
+            pageMessageUtils.addNotHaveTimeClass(lopDangKy);
             return;
         } else if (!timeTableUtils.hasClassThisWeek(tuanHoc)) {
             return;
@@ -551,7 +496,8 @@ class TimeTableRenderService {
 
         let hourOfDayElement = timeTableUtils.getHourOfDayElement(lopDangKy.thu_hoc, time.start_h);
         let top = hourOfDayElement.offsetTop + (time.start_m / 60) * TABLE_ROW_HEIGHT;
-        let height = (time.stop_h - time.start_h + (time.stop_m - time.start_m) / 60) * TABLE_ROW_HEIGHT;
+        let height =
+            (time.stop_h - time.start_h + (time.stop_m - time.start_m) / 60) * TABLE_ROW_HEIGHT;
 
         let _time_start = timeTableUtils.classTimeFormat(time.start_h, time.start_m);
         let _time_stop = timeTableUtils.classTimeFormat(time.stop_h, time.stop_m);
@@ -560,14 +506,16 @@ class TimeTableRenderService {
         newElement.classList.add('classRender', 'positionAbsolute');
         newElement.style.top = `${top}px`;
         newElement.style.height = `${height}px`;
-        let rgb = `rgb(${255 - Math.random() * 150},${255 - Math.random() * 150},${255 - Math.random() * 150})`;
+        let rgb = `rgb(${255 - Math.random() * 150},${255 - Math.random() * 150},${
+            255 - Math.random() * 150
+        })`;
         newElement.style.backgroundColor = rgb;
         newElement.innerHTML = `
             <div class="classContainer positionRelative dadFlexCenter">
                 <div class="classProps">
                     <div class="classProp">${lopDangKy.ten_hoc_phan} (${lopDangKy.loai_lop})</div>
                     <div class="classProp">${_time_start + ' - ' + _time_stop}</div>
-                    <div class="lassProp">${lopDangKy.phong_hoc}</div>
+                    <div class="classProp">${lopDangKy.phong_hoc}</div>
                 </div>
             </div>
         `;
@@ -579,19 +527,46 @@ class TimeTableRenderService {
         TIMETABLE_DATA_DAY_WEEK_CLASSES[lopDangKy.thu_hoc - 2].push(lopDangKy);
     }
     renderClasses(classes = []) {
-        pageMessageManager.clearNotificationQueue();
+        pageMessageUtils.clearNotificationQueue();
         timeTableCleaner.clearOnlyClassRenders();
         timeTableCleaner.clearAllClassDetails();
 
         for (const lopDangKy of classes) {
-            timeTableRenderSerivce.renderLopDangKy(lopDangKy);
+            timeTableRenderUtils.renderLopDangKy(lopDangKy);
         }
 
         timeTableUtils.scanOverlapTimeClasses();
-        pageMessageManager.updateNumberMessages();
+        pageMessageUtils.updateNumberMessages();
     }
 }
-const timeTableRenderSerivce = new TimeTableRenderService();
+const timeTableRenderUtils = new TimeTableRenderUtils();
+
+/**
+ * hàm tìm class với việc tự setup query nên khá linh động
+ */
+async function findManyLopDangKy(term = '', ids = [], options = { fuzzy: false }) {
+    ids = ids.map((e) => utils.fromAnyToNumber(e));
+    let filter = { ma_lop: { $in: ids } };
+    if (options.fuzzy) {
+        filter = {
+            $or: ids.map(function (id) {
+                let length = String(id).length;
+                let missing = 6 - length;
+                let filter = { ma_lop: id };
+                if (missing > 0) {
+                    let delta = Math.pow(10, missing);
+                    let gte = id * delta;
+                    let lte = gte + delta;
+                    filter = { ma_lop: { $gte: gte, $lte: lte } };
+                }
+                return filter;
+            })
+        };
+    }
+
+    let url = AppConfig.worker_config.service2.address + `/api/find/many/lop-dang-ky?term=${term}`;
+    return httpClientService.ajax({ url: url, method: 'POST', body: filter });
+}
 
 /**
  * hàm này là hàm sẽ chạy khi bấm nút PREVIEW
@@ -600,119 +575,151 @@ const timeTableRenderSerivce = new TimeTableRenderService();
  * các biến hiện tại để check việc người dùng thay đổi tham số trước khi result
  * trả về (sẽ dẫn tới sai lệch thông tin các tham số)
  */
-async function REGISTER_PREVIEW() {
+async function registerPreview() {
     let loadingSign = document.getElementById('register-preview-loading-sign');
-
     loadingSign.style.display = null;
 
-    let termPreview = termPreviewManager.getTermPreviewValue();
-    localStorageRegisterPreviewManager.set('term-preview', termPreview);
-    let weekPreview = weekPreviewManager.getWeekPreviewValue();
-    localStorageRegisterPreviewManager.set('week-preview', weekPreview);
+    let termPreview = termPreviewUtils.getValue();
+    let classIds = userInputManager.getClassIds();
+    if (classIds.length == 0) {
+        classIds = registerPreviewUtils.extractClassIdsFromString(inputSearchClassUtils.getValue());
+    }
 
-    let classIds = userInputManager.getClassIdsFromUserInput();
-
-    let response = await registerPreviewRequests.findMany(termPreview, classIds);
+    let response = await findManyLopDangKy(termPreview, classIds);
     if (response.code == 1) {
         let classes = response.data;
 
         //EXPLAIN: có thể query quá lâu người dùng chuyển kì sẽ bị sai
-        if (termPreviewManager.getTermPreviewValue() == termPreview) {
+        if (termPreviewUtils.getValue() == termPreview) {
             // nên check nếu đúng thì mới update giá trị và render
             TIMETABLE_DATA_PREVIEWING_CLASSES = classes;
-            timeTableRenderSerivce.renderClasses(classes);
+            timeTableRenderUtils.renderClasses(classes);
         }
     }
     loadingSign.style.display = 'none';
 }
 
-document.getElementById('secret-show').addEventListener('click', function () {
-    hiddenUtils.execute_order(66);
-});
-document.getElementById('secret-execute').addEventListener('click', function () {
-    hiddenUtils.execute_order(69);
-});
+document
+    .getElementById('secret-show')
+    .addEventListener('click', () => hiddenUtils.execute_order(66));
 
-document.querySelectorAll('.REGISTER-PREVIEW').forEach(function (each) {
-    each.addEventListener('click', REGISTER_PREVIEW);
-});
-document.querySelectorAll('.toggleWeekPreview').forEach(function (each) {
-    let value = each.getAttribute('data-value');
+document
+    .getElementById('secret-execute')
+    .addEventListener('click', () => hiddenUtils.execute_order(69));
+
+document
+    .querySelectorAll('.REGISTER-PREVIEW')
+    .forEach((each) => each.addEventListener('click', registerPreview));
+
+document.querySelectorAll('.toggleWeekPreview').forEach((each) =>
     each.addEventListener('mousedown', function () {
-        weekPreviewManager.updateWhenChangeWeekPreview(value);
-    });
+        let delta = parseInt(each.getAttribute('data-value'));
+        let week_old = weekPreviewUtils.getValue();
+        let week_new = parseInt(week_old + delta);
+        localStorage.setItem('week', week_new);
+
+        weekPreviewUtils.setValue(week_new);
+        timeTableRenderUtils.renderClasses(TIMETABLE_DATA_PREVIEWING_CLASSES);
+    })
+);
+
+weekPreviewTag.addEventListener('keydown', function (e) {
+    if (e.key.match(/^(\d|\w|Backspace)$/)) {
+        setTimeout(() => {
+            let week = weekPreviewUtils.getValue();
+            localStorage.setItem('week', week);
+            weekPreviewUtils.setValue(week);
+            timeTableRenderUtils.renderClasses(TIMETABLE_DATA_PREVIEWING_CLASSES);
+        }, 500);
+    }
 });
 
-httpClientService.ajax({ url: '/register-preview.version.txt', method: 'GET' }, function (data) {
-    if (data) REGISTER_PREVIEW_VERSION = data;
-    document.getElementById('register-preview-version').innerText = REGISTER_PREVIEW_VERSION || 'v2020.07';
+termPreviewTag.addEventListener('keydown', function (e) {
+    if (e.key.match(/^(\d|\w|Backspace)$/)) {
+        setTimeout(() => {
+            let term = termPreviewUtils.getValue();
+            localStorage.setItem('term', term);
+        }, 500);
+    }
 });
 
-OPEN_PAGE_MESSAGES_TAG.addEventListener('click', function () {
+openPageMessagesTag.addEventListener('click', function () {
     //EXPLAIN: check nếu đang dragging thì k kích hoạt
-    if (OPEN_PAGE_MESSAGES_TAG.getAttribute('data-animation-dragging') == 'true') return;
+    if (openPageMessagesTag.getAttribute('data-animation-dragging') == 'true') return;
 
-    PAGE_MESSAGES_CONTENT_TAG.classList.toggle('hidden');
-    CLOSE_PAGE_MESSAGES_TAG.classList.toggle('hidden');
-});
-CLOSE_PAGE_MESSAGES_TAG.addEventListener('click', function () {
-    PAGE_MESSAGES_CONTENT_TAG.classList.add('hidden');
-    CLOSE_PAGE_MESSAGES_TAG.classList.add('hidden');
+    pageMessagesContentTag.classList.toggle('hidden');
+    closePageMessagesTag.classList.toggle('hidden');
 });
 
-let dropHours = new Set([]);
-timeTableRenderSerivce.initTable(dropHours, TABLE_ROW_HEIGHT);
+closePageMessagesTag.addEventListener('click', function () {
+    pageMessagesContentTag.classList.add('hidden');
+    closePageMessagesTag.classList.add('hidden');
+});
 
-var userInputTimeoutHandler;
-INPUT_CLASS_ID_TAG.addEventListener('keydown', (e) => {
-    clearTimeout(userInputTimeoutHandler);
-    userInputTimeoutHandler = setTimeout(async () => {
-        let userInputClassId = '';
-        userInputClassId = userInputManager.getInputClassIdValue().trim();
-        if (userInputClassId == '' || userInputClassId.match(/^\s+$/)) {
-            elementsManager.clearGuessIds();
-            elementsManager.hideGuessIds();
+inputSearchClassTag.addEventListener('keydown', function (e) {
+    setTimeout(async function () {
+        let userInputSearchClassValue = '';
+        userInputSearchClassValue = inputSearchClassUtils.getValue().trim();
+        localStorage.setItem('input-search-class', userInputSearchClassValue);
+        if (userInputSearchClassValue == '' || userInputSearchClassValue.match(/^\s+$/)) {
+            classIdsElementsUtils.clearGuessIds();
+            classIdsElementsUtils.hideGuessIds();
             return;
         }
 
-        if (userInputClassId.length <= 4) {
-            elementsManager.clearGuessIds();
-            elementsManager.hideGuessIds();
+        if (userInputSearchClassValue.length <= 4) {
+            classIdsElementsUtils.clearGuessIds();
+            classIdsElementsUtils.hideGuessIds();
             return;
         }
 
         if (e.key == 'Enter') {
-            elementsManager.addClassId(userInputClassId);
-            userInputManager.clearInputClassIdValue();
+            classIdsElementsUtils.addClassId(userInputSearchClassValue);
+            inputSearchClassUtils.clearValue();
+            classIdsElementsUtils.clearGuessIds();
+            classIdsElementsUtils.hideGuessIds();
             return;
         }
 
-        let termPreview = termPreviewManager.getTermPreviewValue();
-        let ids = registerPreviewUtils.extractClassIdsFromString(userInputClassId);
-        let response = await registerPreviewRequests.findMany(termPreview, ids, { fuzzy: true });
+        let termPreview = termPreviewUtils.getValue();
+        let ids = registerPreviewUtils.extractClassIdsFromString(userInputSearchClassValue);
+        let response = await findManyLopDangKy(termPreview, ids, { fuzzy: true });
 
         if (response.code == 1) {
             let classes = [new LopDangKy()];
             classes = response.data;
             if (classes.length == 0) {
-                elementsManager.clearGuessIds();
-                elementsManager.hideGuessIds();
+                classIdsElementsUtils.clearGuessIds();
+                classIdsElementsUtils.hideGuessIds();
                 return;
             }
-            elementsManager.showGuessIds();
+            classIdsElementsUtils.showGuessIds();
             for (let lopDangKy of classes) {
                 let content = `${lopDangKy.ma_lop} - ${lopDangKy.ten_hoc_phan} (${lopDangKy.loai_lop}) - No.${lopDangKy.buoi_hoc_so}`;
-                elementsManager.addGuessId(content);
+                classIdsElementsUtils.addGuessId(content);
             }
         }
-    }, 50);
+    }, 100);
 });
 
-let mssv = localStorageRegisterPreviewManager.get('mssv');
-if (mssv) userInputManager.setInputMssv_Value(mssv);
+async function main() {
+    httpClientService.ajax(
+        { url: '/register-preview.version.txt', method: 'GET' },
+        function (data) {
+            if (data) VERSION = data;
+            document.getElementById('register-preview-version').innerText = VERSION || 'v2020.07';
+        }
+    );
+    let dropHours = new Set([]);
+    timeTableRenderUtils.initTable(dropHours, TABLE_ROW_HEIGHT);
 
-let termPreview = localStorageRegisterPreviewManager.get('term-preview');
-if (termPreview) termPreviewManager.setTermPreviewValue(termPreview);
+    let inputSearchClass = localStorage.getItem('input-search-class');
+    let term = localStorage.getItem('term');
+    let week = localStorage.getItem('week');
 
-let weekPreview = localStorageRegisterPreviewManager.get('week-preview');
-if (weekPreview) weekPreviewManager.setWeekPreviewValue(weekPreview);
+    inputSearchClassUtils.setValue(inputSearchClass);
+    termPreviewUtils.setValue(term);
+    weekPreviewUtils.setValue(week);
+}
+
+main();

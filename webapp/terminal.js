@@ -212,14 +212,16 @@ terminal.show_env_variables();
 window.addEventListener('drop', (e) => {
     e.preventDefault();
 
-    let dropedFile = e.dataTransfer.files[0];
-    ENV_VARIABLES.file = dropedFile;
-    terminal.append_command('drop file: ' + dropedFile.name);
+    let file = e.dataTransfer.files[0];
+    ENV_VARIABLES.file = file;
 
+    terminal.append_response('drop: ' + file.name);
     terminal.show_env_variables();
 });
-window.addEventListener('dragover', (e) => {
-    e.preventDefault();
+window.addEventListener('dragover', (e) => e.preventDefault());
+httpClientService.ajax({ url: '/terminal.version.txt', method: 'GET' }, function (data) {
+    VERSION_TAG.innerText = data;
+    console.log(data);
 });
 
 TYPING_CONTENT_TAG.addEventListener('keydown', (e) => {
@@ -278,12 +280,7 @@ TYPING_CONTENT_TAG.addEventListener('keydown', (e) => {
             break;
     }
 });
-
 ENV_VARIABLES_TAG.addEventListener('mousedown', (e) => {
     e.preventDefault();
     TYPING_CONTENT_TAG.focus();
-});
-
-httpClientService.ajax({ url: '/terminal.version.txt', method: 'GET' }, function (data) {
-    if (data) VERSION_TAG.innerText = data;
 });

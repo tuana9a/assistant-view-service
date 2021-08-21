@@ -134,7 +134,7 @@ body {
     cursor: text;
 }
 
-#inputClassId {
+#inputSearchClass {
     outline: none;
     border: none;
     border-radius: 5px;
@@ -263,10 +263,13 @@ body {
 }
 .weekToggle #weekPreview {
     text-align: center;
-
+    width: 100px;
+    background: none;
+    border: none;
+    outline: none;
     font-size: 50px;
     color: var(--green_neon);
-    letter-spacing: 10px;
+    letter-spacing: 5px;
     text-shadow: -2px 2px 2px #767676;
 }
 .weekToggle .toggleWeekPreview {
