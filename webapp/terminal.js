@@ -184,7 +184,8 @@ class Terminal {
      * hàm này lấy giá trị đang select của auto complete và nhét vào typing value
      */
     fetch_selecting_auto_complete() {
-        let entry = AUTO_COMPLETE_TAG.querySelectorAll('.entry')[terminal.selected_auto_complete_index];
+        let entry =
+            AUTO_COMPLETE_TAG.querySelectorAll('.entry')[terminal.selected_auto_complete_index];
         if (entry) {
             terminal.set_typing_value(entry.textContent.trim());
         }
@@ -221,7 +222,7 @@ window.addEventListener('drop', (e) => {
 window.addEventListener('dragover', (e) => e.preventDefault());
 httpClientService.ajax({ url: '/terminal.version.txt', method: 'GET' }, function (data) {
     VERSION_TAG.innerText = data;
-    console.log(data);
+    console.log('terminal.version: ' + data);
 });
 
 TYPING_CONTENT_TAG.addEventListener('keydown', (e) => {

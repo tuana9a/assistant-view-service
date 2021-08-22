@@ -67,7 +67,10 @@ class NotificationUtils {
             console.log('Notification Permission:', status);
         });
     }
-    sendNotification(title = '', options = { body: '', data: {}, actions: [{ action: '', title: '' }] }) {
+    sendNotification(
+        title = '',
+        options = { body: '', data: {}, actions: [{ action: '', title: '' }] }
+    ) {
         if (Notification.permission == 'granted') {
             navigator.serviceWorker.getRegistration().then(function (serviceWorker) {
                 serviceWorker.showNotification(title, {
@@ -171,7 +174,9 @@ if (isServiceWorkderAvailable) {
 }
 // localStorage.clear();
 
-httpClientService.ajax({ url: '/app.version.txt', method: 'GET' }, console.log);
+httpClientService.ajax({ url: '/app.version.txt', method: 'GET' }, function (data) {
+    console.log('app.version: ' + data);
+});
 httpClientService.ajax({ url: '/worker-config.json', method: 'GET' }, function (response) {
     if (response) AppConfig.worker_config = response;
 });
