@@ -6,30 +6,14 @@ var isServiceWorkderAvailable = false;
 const CACHE_NAME = 'webapp';
 const CACHED_URLS = [];
 const SERVICE_WORKER_FILE = 'app.service-worker.v1.js';
-export const AppConfig = {
-    worker_config: {
-        service0: {
-            name: 'master.hust-assistant.com',
+export var AppConfig = {
+    apps: {
+        app2: {
+            name: 'register-preview',
             address: ''
         },
-        service1: {
-            name: 'hust-assistant.com',
-            address: ''
-        },
-        service2: {
-            name: 'register-preview.hust-assistant.com',
-            address: ''
-        },
-        service3: {
-            name: 'master.automation.hust-assistant.com',
-            address: ''
-        },
-        service4: {
-            name: 'message-queue.hust-assistant.com',
-            address: ''
-        },
-        service5: {
-            name: 'captcha-predict.automation.hust-assistant.com',
+        app3: {
+            name: 'automation',
             address: ''
         }
     }
@@ -174,9 +158,10 @@ if (isServiceWorkderAvailable) {
 }
 // localStorage.clear();
 
-httpClientService.ajax({ url: '/app.version.txt', method: 'GET' }, function (data) {
-    console.log('app.version: ' + data);
-});
-httpClientService.ajax({ url: '/worker-config.json', method: 'GET' }, function (response) {
-    if (response) AppConfig.worker_config = response;
-});
+httpClientService.ajax({ url: '/app.version.txt', method: 'GET' }, (data) =>
+    console.log('app.version: ' + data)
+);
+httpClientService.ajax(
+    { url: '/app-config.json', method: 'GET' },
+    (response) => (AppConfig = response)
+);

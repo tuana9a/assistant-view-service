@@ -14,7 +14,7 @@ class RegisterPreviewUtils {
     getFirstWeekDay(term = '', available = {}) {
         for (let key in available) {
             if (key == term) {
-                return available[`${key}`].firstWeekDay;
+                return available[key].firstWeekDay;
             }
         }
         return dateUtils.dateToDash(new Date());

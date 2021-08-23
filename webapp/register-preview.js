@@ -1,8 +1,8 @@
 'use strict';
 
+import { utils } from './common.utils.js';
 import { AppConfig } from './app.js';
 import { httpClientService } from './common.js';
-import { utils } from './common.utils.js';
 import { registerPreviewUtils } from './register-preview.utils.js';
 
 // const TABLE_ROW_HEIGHT = 25;
@@ -564,7 +564,7 @@ async function findManyLopDangKy(term = '', ids = [], options = { fuzzy: false }
         };
     }
 
-    let url = AppConfig.worker_config.service2.address + `/api/find/many/lop-dang-ky?term=${term}`;
+    let url = AppConfig.apps.app2.address + `/api/find/many/lop-dang-ky?term=${term}`;
     return httpClientService.ajax({ url: url, method: 'POST', body: filter });
 }
 

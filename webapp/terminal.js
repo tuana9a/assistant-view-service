@@ -107,7 +107,7 @@ class Terminal {
         PARAMS_GUIDE_TAG.style.display = null;
         let paramsHTML = '';
         for (let key in params) {
-            let param = params[`${key}`];
+            let param = params[key];
 
             if (param.value && param.next) {
                 paramsHTML += `<span class="redText">${key}</span> = <span class="whiteText">${param.value}</span>, `;

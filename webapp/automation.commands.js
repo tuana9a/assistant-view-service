@@ -8,7 +8,7 @@ terminal.add_command({ bin: 'upload todos.json', execute: upload_todos_json, arg
 function upload_todos_json(...args) {
     let file = terminal.get('file');
     httpClientService.uploadFile(
-        { url: AppConfig.worker_config.service3.address + '/api/admin/todos.json' },
+        { url: AppConfig.apps.app3.address + '/api/admin/todos.json' },
         file,
         terminal.append_response_json
     );

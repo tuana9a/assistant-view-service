@@ -5,6 +5,7 @@ resource/
 *.cmd
 *.sh
 *test*
+*config.json
 
 # Logs
 *.log
