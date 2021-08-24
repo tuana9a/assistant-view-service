@@ -297,6 +297,133 @@ body {
     transform: translateX(-25%);
 }
 
+.renderContainer {
+    margin: auto;
+    width: fit-content;
+    max-width: 100%;
+    overflow-x: auto;
+    overflow-y: auto;
+}
+.renderContainer::-webkit-scrollbar {
+    width: 3px;
+    height: 3px;
+}
+.renderContainer::-webkit-scrollbar-track {
+    background-color: black;
+}
+.renderContainer::-webkit-scrollbar-thumb {
+    background: red;
+}
+
+/* SECTION: table building */
+.renderTable {
+    /* CAUTION: không đc để overflow ở đây 
+    vì nó làm mất cái sticky của hourIndex */
+    width: fit-content;
+    margin: auto;
+    background: #ffffff;
+    color: black;
+}
+.renderTable .column {
+    min-width: 100px;
+    width: 11vw;
+}
+.renderTable .column.indexHour {
+    min-width: 30px;
+    width: min-content;
+    position: sticky;
+    left: 0;
+    z-index: 21;
+}
+.renderTable .column.currentDayWeek {
+    --current_dayweek_color: rgb(238, 255, 0);
+    background-color: var(--current_dayweek_color);
+}
+
+.renderTable .column .columName {
+    box-sizing: border-box;
+    position: sticky;
+    top: 0;
+    border: 1px solid var(--green_neon);
+    z-index: 20;
+
+    /* background-color:var(--green_neon); */
+    /* color:var(--black_neon); */
+    background-color: var(--black_neon);
+    color: var(--green_neon);
+}
+.renderTable .column .hourOfDay {
+    border: 1px solid var(--green_neon);
+
+    background-color: #dbffcf74;
+    box-sizing: border-box;
+}
+.renderTable .column .notWorkHour {
+    background-color: #c6ffc9;
+}
+
+.renderTable .column.indexHour .hourOfDay {
+    background-color: var(--black_neon);
+    color: var(--green_neon);
+}
+.renderTable .column.weekend .hourOfDay {
+    background-color: #c6ffc9;
+}
+.renderTable .column.currentDayWeek .columName {
+    background-color: var(--current_dayweek_color);
+    color: var(--black_neon);
+}
+.renderTable .column.currentDayWeek .hourOfDay {
+    background-color: var(--current_dayweek_color);
+}
+
+/* SECTION: class rendering */
+.classRender .classContainer .classProps::-webkit-scrollbar,
+.classDetails::-webkit-scrollbar {
+    width: 3px;
+    height: 3px;
+}
+.classRender .classContainer .classProps::-webkit-scrollbar-thumb,
+.classDetails::-webkit-scrollbar-thumb {
+    background-color: red;
+}
+.classRender .classContainer .classProps::-webkit-scrollbar-track,
+.classDetails::-webkit-scrollbar-track {
+    background-color: black;
+}
+
+.renderTable .column .classRender {
+    left: 0px;
+    width: 100%;
+    overflow: visible;
+    border-radius: 3px;
+    /* border: 1px solid var(--black_neon); */
+    box-sizing: border-box;
+    transition: 0.1s;
+    z-index: 5;
+}
+.renderTable .column .classRender .classContainer {
+    height: 100%;
+}
+.renderTable .column .classRender .classContainer .classProps {
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+
+    height: 100%;
+    overflow-y: auto;
+
+    cursor: default;
+    font-size: 12px;
+}
+.renderTable .column .classRender .classContainer .classProps .classProp {
+    /* width: max-content; */
+    /* width: 100%; */
+    min-width: 50%;
+}
+
 /*=======================================================================================*/
 /* SECTION: RESPONSIVE*/
 @media screen and (orientation: portrait) {

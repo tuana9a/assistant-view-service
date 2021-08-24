@@ -6,6 +6,7 @@ var isServiceWorkderAvailable = false;
 const CACHE_NAME = 'webapp';
 const CACHED_URLS = [];
 const SERVICE_WORKER_FILE = 'app.service-worker.v1.js';
+
 export var AppConfig = {
     apps: {
         app2: {

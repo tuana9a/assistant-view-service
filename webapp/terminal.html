@@ -15,17 +15,13 @@
     <link rel="stylesheet" href="terminal.css" />
     <script type="module" defer src="terminal.js"></script>
     <script type="module" defer src="terminal.commands.js"></script>
-    <script type="module" defer src="automation.commands.js"></script>
-    <script type="module" defer src="register-preview.commands.js"></script>
 </head>
 
 <body>
     <div class="section dadFlexCenter">
         <div class="section">
             <div class="section dadFlexCenter">
-                <a class="dadFlexSpaceAroundCenterVer"
-                    style="box-shadow: 1px 2px 3px black; padding: 2px; cursor: pointer; min-width: 200px; text-decoration: none; color: black;"
-                    href="/login">
+                <a class="dadFlexSpaceAroundCenterVer" style="box-shadow: 1px 2px 3px black; padding: 2px; cursor: pointer; min-width: 200px; text-decoration: none; color: black;" href="/login">
                     <span style="width: 18px; height: 18px" class="google-icon"></span>
                     <span style="font-size: 20px">login with Google</span>
                 </a>
@@ -49,12 +45,10 @@
             <div class="typing dadFlexCenterVer">
                 <div class="inputing section positionRelative">
                     <div class="positionAbsolute terminal-auto-complete" id="terminal-auto-complete"></div>
-                    <span id="terminal-command-preview"
-                        class="terminal-command-preview positionAbsolute noSelect"></span>
+                    <span id="terminal-command-preview" class="terminal-command-preview positionAbsolute noSelect"></span>
                     <div class="positionAbsolute terminal-args-guide" id="terminal-args-guide" style="display: none">
                     </div>
-                    <input class="positionRelative terminal-typing-content" autocomplete="off"
-                        id="terminal-typing-content" type="text" />
+                    <input class="positionRelative terminal-typing-content" autocomplete="off" id="terminal-typing-content" type="text" />
                 </div>
             </div>
         </div>

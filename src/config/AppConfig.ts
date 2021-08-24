@@ -5,6 +5,9 @@ var config = {
         address: '',
         port: -1
     },
+    security: {
+        secret: ''
+    },
     path: {
         resource_dir: 'resource/',
         logs_dir: 'logs/'

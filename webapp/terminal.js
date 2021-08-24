@@ -10,17 +10,17 @@ const ENV_VARIABLES_TAG = document.getElementById('terminal-env-variables');
 const TYPING_CONTENT_TAG = document.getElementById('terminal-typing-content');
 const COMMAND_PREVIEW_TAG = document.getElementById('terminal-command-preview');
 
-const ENV_VARIABLES = { term: '20192', file: false };
+const ENV_VARIABLES = { term: '20192', file: false, secret: 'iloveyou' };
 const COMMAND_PATHS = {};
 
-class CommandModel {
+class CommandPattern {
     bin = '';
     args = {};
-    execute(...args) {}
+    execute = console.log;
 }
 
 class Terminal {
-    add_command(command = new CommandModel()) {
+    add_command(command = new CommandPattern()) {
         COMMAND_PATHS[command.bin] = command;
     }
     get_command(bin = '') {
@@ -63,7 +63,7 @@ class Terminal {
             for (let bin in COMMAND_PATHS) {
                 if (command.startsWith(bin)) {
                     let args = command.split(/\s+/);
-                    let command_bin = new CommandModel();
+                    let command_bin = new CommandPattern();
                     command_bin = COMMAND_PATHS[bin];
                     let full_command = command_bin.execute.apply(null, args);
                     return full_command;
@@ -80,6 +80,7 @@ class Terminal {
         for (let key in ENV_VARIABLES) {
             let value = terminal.get(key);
             if (key == 'file') value = value.name;
+            if (key == 'secret') continue;
             innerHTML += `<span class="variable"><span class="name">${key}</span><span class="value">${value}</span></span>`;
         }
         ENV_VARIABLES_TAG.innerHTML = innerHTML;
