@@ -1,4 +1,4 @@
-'use strict';
+"use strict";
 
 class AnimationService {
     makeElement_DragToMove(element) {
@@ -9,14 +9,14 @@ class AnimationService {
 
         let drag_header;
 
-        if ((drag_header = element.querySelector('.drag-to-move-header'))) {
+        if ((drag_header = element.querySelector(".drag-to-move-header"))) {
             // if present, the header is where you move the DIV from:
-            drag_header.addEventListener('mousedown', mousedown);
-            drag_header.addEventListener('touchstart', touchdown, { passive: false });
+            drag_header.addEventListener("mousedown", mousedown);
+            drag_header.addEventListener("touchstart", touchdown, { passive: false });
         } else {
             // otherwise, move the DIV from anywhere inside the DIV:
-            element.addEventListener('mousedown', mousedown);
-            element.addEventListener('touchstart', touchdown, { passive: false });
+            element.addEventListener("mousedown", mousedown);
+            element.addEventListener("touchstart", touchdown, { passive: false });
         }
 
         // SECTION: mouse drag
@@ -27,8 +27,8 @@ class AnimationService {
             positionX = e.clientX;
             positionY = e.clientY;
 
-            document.addEventListener('mouseup', mouseup);
-            document.addEventListener('mousemove', mousemove);
+            document.addEventListener("mouseup", mouseup);
+            document.addEventListener("mousemove", mousemove);
         }
         function mousemove(e) {
             e = e || window.event;
@@ -40,17 +40,17 @@ class AnimationService {
             positionX = e.clientX;
             positionY = e.clientY;
             // set the element's new position
-            element.style.top = element.offsetTop + deltaY + 'px';
-            element.style.left = element.offsetLeft + deltaX + 'px';
+            element.style.top = element.offsetTop + deltaY + "px";
+            element.style.left = element.offsetLeft + deltaX + "px";
             // EXPLAIN: dùng cho element muốn phân biệt drag vs click
-            element.setAttribute('data-animation-dragging', true);
+            element.setAttribute("data-animation-dragging", true);
         }
         function mouseup(e) {
             // stop moving when mouse button is released:
-            document.removeEventListener('mouseup', mouseup);
-            document.removeEventListener('mousemove', mousemove);
+            document.removeEventListener("mouseup", mouseup);
+            document.removeEventListener("mousemove", mousemove);
             // EXPLAIN: set time out để event click sẽ phân biệt đc vs drag, click sẽ k trigger nếu đang drag
-            setTimeout(() => element.setAttribute('data-animation-dragging', false), 0);
+            setTimeout(() => element.setAttribute("data-animation-dragging", false), 0);
         }
 
         // SECTION: touch drag
@@ -61,8 +61,8 @@ class AnimationService {
             positionX = e.touches[0].clientX;
             positionY = e.touches[0].clientY;
 
-            document.addEventListener('touchend', touchup);
-            document.addEventListener('touchmove', touchmove, { passive: false });
+            document.addEventListener("touchend", touchup);
+            document.addEventListener("touchmove", touchmove, { passive: false });
         }
         function touchmove(e) {
             e = e || window.event;
@@ -74,17 +74,17 @@ class AnimationService {
             positionX = e.touches[0].clientX;
             positionY = e.touches[0].clientY;
             // set the element's new position
-            element.style.top = element.offsetTop + deltaY + 'px';
-            element.style.left = element.offsetLeft + deltaX + 'px';
+            element.style.top = element.offsetTop + deltaY + "px";
+            element.style.left = element.offsetLeft + deltaX + "px";
             // EXPLAIN: dùng cho element muốn phân biệt drag vs click
-            element.setAttribute('data-animation-dragging', true);
+            element.setAttribute("data-animation-dragging", true);
         }
         function touchup(e) {
             // stop moving when mouse button is released:
-            document.removeEventListener('touchend', touchup);
-            document.removeEventListener('touchmove', touchmove);
+            document.removeEventListener("touchend", touchup);
+            document.removeEventListener("touchmove", touchmove);
             // EXPLAIN: set time out để event click sẽ phân biệt đc vs drag
-            setTimeout(() => element.setAttribute('data-animation-dragging', false), 0);
+            setTimeout(() => element.setAttribute("data-animation-dragging", false), 0);
         }
     }
     makeElement_GoogleIcon(element) {
@@ -155,8 +155,8 @@ class AnimationService {
 }
 export const animationService = new AnimationService();
 
-document.querySelectorAll('.drag-to-move').forEach(animationService.makeElement_DragToMove);
-document.querySelectorAll('span.google-icon').forEach(animationService.makeElement_GoogleIcon);
-document.querySelectorAll('span.round-and-round-icon').forEach(animationService.makeElement_RoundAndRoundIcon);
-document.querySelectorAll('span.bell-icon-normal').forEach(animationService.makeElement_BellIcon_normal);
-document.querySelectorAll('span.bell-icon-ring').forEach(animationService.makeElement_BellIcon_ring);
+document.querySelectorAll(".drag-to-move").forEach(animationService.makeElement_DragToMove);
+document.querySelectorAll("span.google-icon").forEach(animationService.makeElement_GoogleIcon);
+document.querySelectorAll("span.round-and-round-icon").forEach(animationService.makeElement_RoundAndRoundIcon);
+document.querySelectorAll("span.bell-icon-normal").forEach(animationService.makeElement_BellIcon_normal);
+document.querySelectorAll("span.bell-icon-ring").forEach(animationService.makeElement_BellIcon_ring);

@@ -1,12 +1,12 @@
-'user strict';
+"user strict";
 
 const NUM_OF_DAYWEEK = 7;
 
 //SECTION: support method
 class Utils {
     getCookie(name) {
-        let pattern = name + '=';
-        let cookies = document.cookie.split(';');
+        let pattern = name + "=";
+        let cookies = document.cookie.split(";");
         for (let i = 0, length = cookies.length; i < length; i++) {
             let cookie = cookies[i];
             cookie = cookie.trim();
@@ -14,15 +14,15 @@ class Utils {
                 return cookie.substring(pattern.length, cookie.length);
             }
         }
-        return '';
+        return "";
     }
     getQueryValueFromUrl(name, url = window.location.href) {
-        name = name.replace(/[\[\]]/g, '\\$&');
-        var regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)'),
+        name = name.replace(/[\[\]]/g, "\\$&");
+        var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
             results = regex.exec(url);
         if (!results) return null;
-        if (!results[2]) return '';
-        return decodeURIComponent(results[2].replace(/\+/g, ' '));
+        if (!results[2]) return "";
+        return decodeURIComponent(results[2].replace(/\+/g, " "));
     }
     existInArray(value, array = []) {
         for (const e of array) {
@@ -43,9 +43,9 @@ class DateUtils {
         let day = input.getDate();
         let month = input.getMonth() + 1; //EXPLAIN: range: 0-11
         let year = input.getFullYear();
-        return (day < 10 ? '0' : '') + day + '/' + (month < 10 ? '0' : '') + month + '/' + year;
+        return (day < 10 ? "0" : "") + day + "/" + (month < 10 ? "0" : "") + month + "/" + year;
     }
-    fromStringToDate_VN(input = '') {
+    fromStringToDate_VN(input = "") {
         if (!input.match(/^\d{1,2}(\/|-|\.)\d{1,2}(\/|-|\.)\d+$/)) return new Date();
         try {
             let parts = input.split(/(\/|-|\.)/).filter((e) => !e.match(/^(\/|-|\.)$/));
@@ -72,18 +72,18 @@ class DateUtils {
     }
     timeBetween_String(date1 = new Date(), date2 = new Date()) {
         let miliseconds = date2.getTime() - date1.getTime();
-        if (miliseconds < 1000) return miliseconds + 'ms ago';
+        if (miliseconds < 1000) return miliseconds + "ms ago";
         let seconds = miliseconds / 1000.0;
-        if (seconds < 60) return Math.round(seconds) + 's ago';
+        if (seconds < 60) return Math.round(seconds) + "s ago";
         let minutes = seconds / 60.0;
-        if (minutes < 60) return Math.round(minutes) + 'm ago';
+        if (minutes < 60) return Math.round(minutes) + "m ago";
         let hours = minutes / 60.0;
-        if (hours < 24) return Math.round(hours) + 'h ago';
+        if (hours < 24) return Math.round(hours) + "h ago";
         let days = hours / 24.0;
-        return Math.round(days) + 'd ago';
+        return Math.round(days) + "d ago";
     }
     //CAUTION: nếu lệch mất một tuần thì vào đây mà sửa
-    weeksFromStartDay(dash = '', firstWeekDay = '') {
+    weeksFromStartDay(dash = "", firstWeekDay = "") {
         // console.log(dash, firstWeekDay);
         let date1 = this.fromStringToDate_VN(dash);
         let date2 = this.fromStringToDate_VN(firstWeekDay);
@@ -92,7 +92,7 @@ class DateUtils {
         return Math.floor(weeks) + 1;
         //EXPLAIN: đéo biết giải thích thế nào cái cộng 1, thời gian mệt vlòn
     }
-    calcCurrentWeek(firstWeekDay = '') {
+    calcCurrentWeek(firstWeekDay = "") {
         let start = dateUtils.fromStringToDate_VN(firstWeekDay);
         let weeks = Math.floor(dateUtils.daysBetween(start, new Date()) / NUM_OF_DAYWEEK);
         return weeks + 1; //EXPLAIN: vd chia đc 0.5 thì là tuần 1, chia đc 1.2 là tuần 2

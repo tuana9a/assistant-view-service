@@ -1,8 +1,8 @@
-'user strict';
+"user strict";
 
 //SECTION: request
 class HttpClientService {
-    async ajax(option = { method: '', url: '', headers: {}, body: {} }, onDone = (data) => data) {
+    async ajax(option = { method: "", url: "", headers: {}, body: {} }, onDone = (data) => data) {
         return new Promise(function (resolve, reject) {
             let xhttp = new XMLHttpRequest();
             let headers = option.headers;
@@ -21,14 +21,14 @@ class HttpClientService {
             };
 
             xhttp.open(option.method, option.url);
-            xhttp.setRequestHeader('accept', '*/*');
-            xhttp.setRequestHeader('Content-Type', 'application/json; charset=utf-8');
+            xhttp.setRequestHeader("accept", "*/*");
+            xhttp.setRequestHeader("Content-Type", "application/json; charset=utf-8");
             for (const header in headers) xhttp.setRequestHeader(header, headers[header]);
 
             xhttp.send(JSON.stringify(option.body));
         });
     }
-    async uploadFile(option = { url: '', headers: {} }, file, onDone = () => {}) {
+    async uploadFile(option = { url: "", headers: {} }, file, onDone = () => {}) {
         let xhttp = new XMLHttpRequest();
         let headers = option.headers;
 
@@ -42,11 +42,11 @@ class HttpClientService {
             onDone(data);
         };
 
-        xhttp.open('POST', option.url);
+        xhttp.open("POST", option.url);
         for (const header in headers) xhttp.setRequestHeader(header, headers[header]);
 
         let formData = new FormData();
-        formData.append('file', file);
+        formData.append("file", file);
         xhttp.send(formData);
     }
 }

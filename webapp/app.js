@@ -1,27 +1,29 @@
-'use strict';
+"use strict";
 
-import { httpClientService } from './common.js';
+import { httpClientService } from "./common.js";
 
-var isServiceWorkderAvailable = false;
-const CACHE_NAME = 'webapp';
+var isServiceWorkderAvailable = "serviceWorker" in navigator;
+
+const CACHE_NAME = "webapp";
 const CACHED_URLS = [];
-const SERVICE_WORKER_FILE = 'app.service-worker.v1.js';
 
 export var AppConfig = {
     apps: {
         app2: {
-            name: 'register-preview',
-            address: ''
+            name: "",
+            address: ""
         },
         app3: {
-            name: 'automation',
-            address: ''
+            name: "",
+            address: ""
         }
-    }
+    },
+    version: "v2019.7",
+    service_worker_file: "app.service-worker.js"
 };
 
 class CachesUtils {
-    async clearCaches() {
+    async clear() {
         return caches.keys().then(function (cacheNames) {
             return Promise.all(
                 cacheNames.map(function (cacheName) {
@@ -30,7 +32,7 @@ class CachesUtils {
             );
         });
     }
-    async backupCaches() {
+    async backup() {
         let cache = await caches.open(CACHE_NAME);
         let backup = new Map();
         for (const url of CACHED_URLS) {
@@ -38,10 +40,9 @@ class CachesUtils {
         }
         return backup;
     }
-    async updateCaches() {
-        await cachesUtils.clearCaches();
+    async update() {
         let cache = await caches.open(CACHE_NAME);
-        return cache.addAll(CACHED_URLS.map((url) => new Request(url, { cache: 'reload' })));
+        return cache.addAll(CACHED_URLS.map((url) => new Request(url, { cache: "reload" })));
     }
 }
 const cachesUtils = new CachesUtils();
@@ -49,37 +50,34 @@ const cachesUtils = new CachesUtils();
 class NotificationUtils {
     requestNotificationPermission() {
         Notification.requestPermission(function (status) {
-            console.log('Notification Permission:', status);
+            console.log("Notification Permission:", status);
         });
     }
-    sendNotification(
-        title = '',
-        options = { body: '', data: {}, actions: [{ action: '', title: '' }] }
-    ) {
-        if (Notification.permission == 'granted') {
+    sendNotification(title = "", options = { body: "", data: {}, actions: [{ action: "", title: "" }] }) {
+        if (Notification.permission == "granted") {
             navigator.serviceWorker.getRegistration().then(function (serviceWorker) {
                 serviceWorker.showNotification(title, {
                     ...options,
-                    icon: 'icons/manifest-icon-192.png',
+                    icon: "icons/manifest-icon-192.png",
                     silent: true
                 });
             });
         }
     }
 }
-export const notificationUtils = new NotificationUtils();
+const notificationUtils = new NotificationUtils();
 
 class ServiceWorkerUtils {
     registerServiceWorker(serviceWorkerFile) {
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', function () {
+        if ("serviceWorker" in navigator) {
+            window.addEventListener("load", function () {
                 navigator.serviceWorker
                     .register(serviceWorkerFile)
                     .then(function () {
-                        console.log('register service worker: success');
+                        console.log("register service worker: success");
                     })
                     .catch(function () {
-                        console.log('register service worker: failed');
+                        console.log("register service worker: failed");
                     });
             });
         }
@@ -96,20 +94,20 @@ const serviceWorkerUtils = new ServiceWorkerUtils();
 var websocket = null;
 
 class WebSocketClient {
-    async connect(path = 'websocket') {
+    async connect(path = "websocket") {
         return new Promise(function (resolve, reject) {
             switch (window.location.protocol) {
-                case 'http:':
+                case "http:":
                     websocket = new WebSocket(`ws://${window.location.host}${path}`);
                     break;
-                case 'https:':
+                case "https:":
                     websocket = new WebSocket(`wss://${window.location.host}${path}`);
                     break;
             }
             websocket.onopen = function (e) {
-                terminal.append_response('WebSocket connected 💘');
-                websocket.send(JSON.stringify({ which: 0, auth: getCookie('auth') }));
-                resolve('WebSocket connected 💘');
+                terminal.append_response("WebSocket connected 💘");
+                websocket.send(JSON.stringify({ which: 0, auth: getCookie("auth") }));
+                resolve("WebSocket connected 💘");
             };
             websocket.onmessage = function (msg) {
                 terminal.append_response_json(JSON.parse(msg.data));
@@ -122,47 +120,31 @@ class WebSocketClient {
         if (websocket) {
             if (websocket.readyState == WebSocket.OPEN) websocket.close();
             websocket = null;
-            terminal.append_response('WebSocket closed 😢');
+            terminal.append_response("WebSocket closed 😢");
         }
     }
 }
-export const webSocketClient = new WebSocketClient();
+const webSocketClient = new WebSocketClient();
 
 class App {
     async update() {
-        console.log('updating...');
-        const BACKUP = await cachesUtils.backupCaches();
-
-        cachesUtils
-            .updateCaches()
-            .then(function () {
-                console.log('update success');
-            })
-            .catch(function () {
-                console.log('update failed');
-                caches.open(CACHE_NAME).then(function (cache) {
-                    for (const url of CACHED_URLS) {
-                        cache.put(new Request(url), BACKUP.get(url));
-                    }
-                });
-            });
+        const BACKUP = await cachesUtils.backup();
+        await cachesUtils.clear();
+        try {
+            await cachesUtils.update(); //TODO: check if error can catch
+            console.log("update: success");
+        } catch (err) {
+            console.log("update: failed");
+            let cache = await caches.open(CACHE_NAME);
+            CACHED_URLS.forEach((url) => cache.put(new Request(url), BACKUP.get(url)));
+        }
+    }
+    reset() {
+        cachesUtils.clear();
+        localStorage.clear();
+        serviceWorkerUtils.unregisterServiceWorkers();
     }
 }
-export const app = new App();
+const app = new App();
 
-if ('serviceWorker' in navigator) {
-    isServiceWorkderAvailable = true;
-}
-if (isServiceWorkderAvailable) {
-    cachesUtils.clearCaches();
-    serviceWorkerUtils.unregisterServiceWorkers();
-}
-// localStorage.clear();
-
-httpClientService.ajax({ url: '/app.version.txt', method: 'GET' }, (data) =>
-    console.log('app.version: ' + data)
-);
-httpClientService.ajax(
-    { url: '/app-config.json', method: 'GET' },
-    (response) => (AppConfig = response)
-);
+httpClientService.ajax({ url: "/app-config.json", method: "GET" }, (data) => (AppConfig = data));
