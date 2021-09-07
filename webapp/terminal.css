@@ -1,36 +1,40 @@
-::-webkit-scrollbar {
-    width: 3px;
-    height: 3px;
-}
-::-webkit-scrollbar-track {
-    background-color: black;
-}
-::-webkit-scrollbar-thumb {
-    background: red;
+html {
+    scroll-behavior: smooth;
+    min-height: 101%;
 }
 
-.terminal {
+body {
+    background-color: #747474;
+}
+
+.CustomMessengerV1 {
     /* box-shadow: 0 0 10px 1px black; */
     overflow: visible;
-    background-color: rgb(0, 0, 0);
+    background-color: #000000;
     border-radius: 5px;
     height: fit-content;
     min-width: 500px;
     max-width: 1000px;
 }
 
-.terminal * {
-    border-radius: 5px;
-    overflow: visible;
+.CustomMessengerV1 ::-webkit-scrollbar {
+    width: 3px;
+    height: 3px;
 }
-.terminal .title {
-    padding: 2px 4px;
-    background-color: rgb(255, 255, 255);
-    color: black;
-    box-shadow: 0 0 5px 0 black;
+.CustomMessengerV1 ::-webkit-scrollbar-track {
+    background-color: black;
+}
+.CustomMessengerV1 ::-webkit-scrollbar-thumb {
+    background: red;
 }
 
-.terminal .screen {
+.CustomMessengerV1 .MessengerTitle {
+    padding: 2px 4px;
+    background-color: #ffffff;
+    color: black;
+}
+
+.CustomMessengerV1 .MessengerScreen {
     height: 50vh;
     min-height: 200px;
     max-height: 500px;
@@ -39,100 +43,72 @@
     padding-bottom: 0;
 }
 
-.terminal .screen span {
+.CustomMessengerV1 .MessengerScreen span {
     display: inline-block;
 }
-.terminal .screen .time {
-    background-color: rgb(255, 255, 255);
+.CustomMessengerV1 .MessengerScreen .MessageTime {
+    background-color: #ffffff;
     color: black;
-    padding: 1px 5px;
+    padding: 3px;
+    height: fit-content;
 }
 
-.terminal .screen .typed {
+.CustomMessengerV1 .MessengerScreen .Message {
     color: white;
-    margin: 4px;
+    margin: 3px;
 }
-.terminal .screen .typed .content {
-    background-color: rgb(46, 46, 46);
-    padding: 1px 5px;
-    margin-left: 5px;
-}
-
-.terminal .screen .typed .content {
+.CustomMessengerV1 .MessengerScreen .MessageContent {
+    background-color: #2e2e2e;
+    margin: 3px;
+    padding: 3px;
     cursor: pointer;
 }
-
-.terminal .screen .response {
+.CustomMessengerV1 .MessengerScreen .ResponseMessage {
     color: white;
     margin: 4px;
     display: flex;
     justify-content: flex-end;
 }
-.terminal .screen .response .content {
-    /* background-color: rgb(42, 99, 255); */
+.CustomMessengerV1 .MessengerScreen .ResponseMessage .MessageContent {
+    /* background-color: #2a63ff; */
     /* background-color: #4A4A4A; */
     background-color: #1d3c78;
-    padding: 1px 5px;
-    margin: 0 5px 0 0;
     max-height: 500px;
     overflow: auto;
+    font-size: 16px;
 }
 
-.terminal .global {
-    padding: 0 4px;
-    max-width: 100%;
-    min-height: 25px;
-    overflow: auto;
-    /* background-color: transparent; */
-}
-.terminal .global .variable {
-    margin-left: 4px;
-}
-.terminal .global .variable span {
-    background-color: rgb(131, 131, 131);
-    padding: 0 4px;
-    color: black;
-}
-.terminal .global .variable .value {
-    color: cyan;
-    margin-left: 1px;
-}
-
-.terminal .typing {
-    color: rgb(0, 255, 0);
+.CustomMessengerV1 .TypingMessage {
+    color: #00ff00;
     padding: 4px;
     overflow: visible;
 }
-.terminal .typing .inputing {
+.CustomMessengerV1 .TypingMessage .TypingMessageContainer {
     width: 100%;
-    background-color: rgb(46, 46, 46);
+    background-color: #2e2e2e;
+    --temp1: 5px;
+    --temp2: 5px;
+    padding: var(--temp1) var(--temp2);
 }
-.terminal .typing .inputing .terminal-typing-content {
+.CustomMessengerV1 .TypingMessage .TypingMessageContainer .MessageTypingContent {
     outline: none;
     color: white;
     border: none;
-    padding: 2px 8px;
+    padding: 0;
     font: unset;
-    width: calc(100% - 16px);
+    width: 100%;
     background-color: transparent;
     z-index: 2;
 }
-.terminal .typing .inputing .terminal-command-preview {
-    left: 4px;
-    padding: 2px 4px;
+.CustomMessengerV1 .TypingMessage .TypingMessageContainer .MessagePreview {
+    left: 0px;
+    padding: 0px var(--temp2);
     color: rgba(255, 255, 255, 0.5);
     z-index: 0;
 }
-.terminal .typing .inputing .terminal-args-guide {
-    bottom: calc(100% + 4px);
-    padding: 2px 8px;
-    left: 0px;
-    background-color: rgb(46, 46, 46);
-    z-index: 0;
-}
-.terminal .typing .inputing .terminal-auto-complete {
+.CustomMessengerV1 .TypingMessage .TypingMessageContainer .MessageAutoComplete {
     top: calc(100% + 8px);
-    left: -12px;
+    left: 0px;
     max-height: 95px;
     direction: rtl;
 
@@ -144,38 +120,21 @@
     padding: 4px;
     z-index: 0;
 }
-.terminal .typing .inputing .terminal-auto-complete .entry {
+.CustomMessengerV1 .TypingMessage .TypingMessageContainer .MessageAutoComplete .MessageEntry {
     overflow: visible;
     direction: ltr;
 }
-.terminal .typing .inputing .terminal-auto-complete .entry .cursor {
-    /* display: none; */
-    opacity: 0;
-    width: 0;
-    height: 0;
-    margin: 0 5px;
-
-    border-radius: 50%;
-
-    background-color: red;
-    transition: 0.4s;
-}
-.terminal .typing .inputing .terminal-auto-complete .entry .value {
+.CustomMessengerV1 .TypingMessage .TypingMessageContainer .MessageAutoComplete .MessageEntry .MessageEntryContent {
     cursor: pointer;
-    color: black;
+    color: white;
     margin: 3px 0px;
-    box-shadow: 0 0 3px 0 black;
+    /* box-shadow: 0 0 3px 0 black; */
     padding: 2px 5px;
-    background-color: rgba(44, 44, 44, 0.7);
+    background-color: #2c2c2cb3;
+    opacity: 0.5;
 }
-.terminal .typing .inputing .terminal-auto-complete .entry:hover .cursor,
-.terminal .typing .inputing .terminal-auto-complete .entry.selected .cursor {
-    /* display: inline-block; */
-    width: 10px;
-    height: 10px;
+.CustomMessengerV1 .TypingMessage .TypingMessageContainer .MessageAutoComplete .MessageEntry.isSelecting .MessageEntryContent {
     opacity: 1;
-}
-.terminal .typing .inputing .terminal-auto-complete .entry:hover .value,
-.terminal .typing .inputing .terminal-auto-complete .entry.selected .value {
-    color: rgb(0, 255, 0);
+    border: 1px solid #000000;
+    /* box-shadow: 0px 0px 5px 0px #000000; */
 }

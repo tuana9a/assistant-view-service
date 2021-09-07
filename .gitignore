@@ -6,6 +6,7 @@ resource/
 *.sh
 *test*
 *config.json
+*prettier*
 
 # Logs
 *.log

@@ -8,27 +8,26 @@ terminal.add_command({ bin: "set", execute: set, args: {} });
 function set(...args) {
     let key = args[1];
     let value = args[2];
-    let sucess = terminal.set(key, value);
-    terminal.show_env_variables();
+    let sucess = terminal.env_set(key, value);
     return `set ${key}=${value} sucess:${sucess}`;
 }
 
 terminal.add_command({ bin: "get", execute: get, args: {} });
 function get(...args) {
     let key = args[1];
-    terminal.append_response(terminal.get(key));
+    terminal.append_response(terminal.env_get(key));
     return "";
 }
 
 terminal.add_command({ bin: "insert classes", execute: insert_classes, args: {} });
 function insert_classes(...args) {
-    let term = args[2] || terminal.get("term");
-    let file = terminal.get("file");
+    let term = args[2] || terminal.env_get("term");
+    let file = terminal.env_get("file");
     httpClientService.uploadFile(
         {
             url: AppConfig.apps.app2.address + `/api/insert/many/lop-dang-ky?term=${term}`,
             headers: {
-                authorization: terminal.get("secret")
+                authorization: terminal.env_get("secret")
             }
         },
         file,
@@ -39,13 +38,13 @@ function insert_classes(...args) {
 
 terminal.add_command({ bin: "delete classes", execute: delete_classes, args: {} });
 function delete_classes(...args) {
-    let term = args[2] || terminal.get("term");
+    let term = args[2] || terminal.env_get("term");
     httpClientService.ajax(
         {
             url: AppConfig.apps.app2.address + "/api/delete/many/lop-dang-ky?term=" + term,
             method: "POST",
             headers: {
-                authorization: terminal.get("secret")
+                authorization: terminal.env_get("secret")
             }
         },
         terminal.append_response_json
@@ -53,19 +52,37 @@ function delete_classes(...args) {
     return `delete classes ${term}`;
 }
 
-// automation
 terminal.add_command({ bin: "upload todos.json", execute: upload_todos_json, args: {} });
 function upload_todos_json(...args) {
-    let file = terminal.get("file");
+    let file = terminal.env_get("file");
     httpClientService.uploadFile(
         {
             url: AppConfig.apps.app3.address + "/api/upload/todos.json",
             headers: {
-                authorization: terminal.get("secret")
+                authorization: terminal.env_get("secret")
             }
         },
         file,
         terminal.append_response_json
     );
-    return `upload todos.json: ${JSON.stringify(file)}`;
+    return `upload todos.json file=${file.name}`;
 }
+
+terminal.add_command({ bin: "show env", execute: show_env, args: {} });
+function show_env(...args) {
+    terminal.append_response_json(terminal.env_get_all());
+    return `show env`;
+}
+
+terminal.env_set("term", localStorage.getItem("term"));
+show_env();
+
+window.addEventListener("drop", (e) => {
+    e.preventDefault();
+
+    let file = e.dataTransfer.files[0];
+    ENV_VARIABLES.file = file;
+
+    terminal.append_response("drop: " + file.name);
+});
+window.addEventListener("dragover", (e) => e.preventDefault());

@@ -1,19 +1,3 @@
-@font-face {
-    font-family: 'Alata'; /*a name to be used later*/
-    src: url('fonts/Alata.ttf'); /*URL to font*/
-}
-
-:root {
-    --green_neon: #73ff00;
-    --black_neon: #000800;
-    --fade_black_neon: #000a00f3;
-    --fade_green_neon: #081000;
-    --page_background: #424242;
-}
-
-* {
-    font-family: 'Alata', cursive;
-}
 html {
     scroll-behavior: smooth;
 }
@@ -27,330 +11,148 @@ input::-webkit-inner-spin-button {
     margin: 0;
 }
 
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
+.text-align-center {
     text-align: center;
 }
 
-.section {
-    margin: 3px;
-}
-.section .sectionTitle {
-    padding: 3px;
-    border-radius: 5px;
-    border: 1px solid black;
-    background-color: rgb(1, 5, 0);
-    color: rgb(13, 255, 0);
-    letter-spacing: 1px;
-    box-shadow: 0 0 5px 1px black;
-}
-.neonHover {
-    color: var(--green_neon);
-    background-color: var(--black_neon);
-
-    padding: 4px 5px;
-    border-radius: 3px;
-    margin: 10px 0px;
-    display: inline-block;
-    font-size: 12px;
-}
-.neonHover:hover {
-    box-shadow: 0 0 5px 1px var(--green_neon);
-    color: var(--black_neon);
-    background-color: var(--green_neon);
-}
-
-.centerText {
-    text-align: center;
-}
-.redText {
-    color: red;
-}
-.whiteText {
-    color: white;
-}
-.blueText {
-    color: blue;
-}
-.violetText {
-    color: violet;
-}
-.boldText {
-    font-weight: bold;
-}
-.noSelect {
+.user-select-none {
     -webkit-user-select: none; /* Chrome all / Safari all */
     -moz-user-select: none; /* Firefox all */
     -ms-user-select: none; /* IE 10+ */
     user-select: none; /* Likely future */
 }
 
-.hidden {
-    display: none;
+.margin-auto {
+    margin: auto;
 }
 
-.positionSticky {
-    top: 0;
+.color-red {
+    color: red;
+}
+.color-white {
+    color: white;
+}
+.color-blue {
+    color: blue;
+}
+.color-violet {
+    color: violet;
+}
+.background-color-white {
+    background-color: white;
+}
+
+.font-weight-bold {
+    font-weight: bold;
+}
+
+.position-sticky {
     position: sticky;
 }
-.positionFixed {
+.position-fixed {
     position: fixed;
 }
-.positionAbsolute {
+.position-absolute {
     position: absolute;
 }
-.positionRelative {
+.position-relative {
     position: relative;
 }
 
-/* BUTTON */
-
-.bigButton {
+.font-size-40px {
     font-size: 40px;
 }
-.midButton {
+.font-size-30px {
     font-size: 30px;
 }
-.smallButton {
+.font-size-20px {
     font-size: 20px;
-}
-.tallButton {
-    font-size: 20px;
-}
-
-/*chỉ cần thêm class vào thẻ button là dùng được*/
-.neonButtonSlide {
-    display: inline-block;
-    position: relative;
-    overflow: hidden;
-    z-index: 1;
-
-    border: none;
-    outline: none;
-    padding: 3px 10px;
-    border-radius: 5px;
-
-    cursor: default;
-
-    color: var(--green_neon);
-    background: var(--black_neon);
-
-    transition: 0.1s;
-    transition-delay: 0.1s;
-}
-.neonButtonSlide::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    z-index: -1;
-    background-color: var(--green_neon);
-
-    transform: scaleX(0);
-    transform-origin: left;
-    transition: 0.1s linear;
-}
-.neonButtonSlide:hover {
-    color: var(--black_neon);
-    box-shadow: 0 0 10px var(--green_neon), 0 0 40px var(--green_neon), 0 0 80px var(--green_neon);
-}
-.neonButtonSlide:hover::before {
-    transform: scaleX(1);
-}
-
-.neonButtonClick {
-    display: inline-block;
-    position: relative;
-    z-index: 1;
-
-    outline: none;
-    padding: 3px 10px;
-    border-radius: 5px;
-    border: 1px solid var(--green_neon);
-
-    cursor: default;
-
-    color: var(--green_neon);
-    background: var(--black_neon);
-
-    box-shadow: var(--fade_green_neon) -3px 3px, var(--fade_green_neon) -2.5px 2.5px, var(--fade_green_neon) -2px 2px, var(--fade_green_neon) -1.5px 1.5px, var(--fade_green_neon) -1px 1px,
-        var(--fade_green_neon) -0.5px 0.5px, black -3px 3px 10px;
-    left: 3px;
-    bottom: 3px;
-
-    transition: 0s;
-}
-.neonButtonClick:active {
-    box-shadow: 0 0 20px var(--green_neon);
-    left: 0;
-    bottom: 0;
-}
-
-.neonButtonClickSimple {
-    display: inline-block;
-    position: relative;
-    z-index: 1;
-
-    border: none;
-    outline: none;
-    padding: 3px 10px;
-    border-radius: 5px;
-    border: 1px solid var(--green_neon);
-
-    cursor: default;
-
-    color: var(--green_neon);
-    background: var(--black_neon);
-
-    transition: 0s;
-}
-.neonButtonClickSimple:active {
-    box-shadow: 0 0 20px var(--green_neon);
 }
 
 /* DAD CHILD */
-
-.dadFlex {
+.display-none {
+    display: none;
+}
+.display-flex {
     display: flex;
 }
-.dadFlexSpaceEven {
-    display: flex;
+.justify-content-center {
+    justify-content: center;
+}
+.justify-content-space-evenly {
     justify-content: space-evenly;
 }
-.dadFlexSpaceAround {
-    display: flex;
+.justify-content-space-around {
     justify-content: space-around;
 }
-.dadFlexSpaceBetween {
-    display: flex;
+.justify-content-space-between {
     justify-content: space-between;
 }
-.dadFlexSpaceEvenCenterVer {
-    display: flex;
+.align-items-center {
     align-items: center;
-    justify-content: space-evenly;
 }
-.dadFlexSpaceBetweenCenterVer {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-}
-.dadFlexSpaceAroundCenterVer {
-    display: flex;
-    align-items: center;
-    justify-content: space-around;
+.flex-wrap-wrap {
+    flex-wrap: wrap;
 }
 
-.dadFlexCenter {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-.dadFlexCenterHor {
-    display: flex;
-    justify-content: center;
-}
-.dadFlexCenterVer {
-    display: flex;
-    align-items: center;
-}
-
-.dadFlexWrap {
-    display: flex;
-    flex-wrap: wrap;
-}
-.dadFlexWrapSpaceEven {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-evenly;
-}
-.dadFlexWrapSpaceBetween {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-between;
-}
-
-.dadFlexWrapCenter {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    align-items: center;
-}
-.dadFlexWrapCenterHor {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-}
-.dadFlexWrapCenterVer {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-}
-
-.child10 {
+.width-10percent {
     width: 10%;
 }
-.child20 {
+.width-20percent {
     width: 20%;
 }
-.child30 {
+.width-30percent {
     width: 30%;
 }
-.child40 {
+.width-40percent {
     width: 40%;
 }
-.child50 {
+.width-50percent {
     width: 50%;
 }
-.child60 {
+.width-60percent {
     width: 60%;
 }
-.child70 {
+.width-70percent {
     width: 70%;
 }
-.child80 {
+.width-80percent {
     width: 80%;
 }
-.child90 {
+.width-90percent {
     width: 90%;
 }
-.child100 {
+.width-100percent {
     width: 100%;
 }
 
-.childMin10 {
+.min-width-10percent {
     min-width: 10%;
 }
-.childMin20 {
+.min-width-20percent {
     min-width: 20%;
 }
-.childMin30 {
+.min-width-30percent {
     min-width: 30%;
 }
-.childMin40 {
+.min-width-40percent {
     min-width: 40%;
 }
-.childMin50 {
+.min-width-50percent {
     min-width: 50%;
 }
-.childMin60 {
+.min-width-60percent {
     min-width: 60%;
 }
-.childMin70 {
+.min-width-70percent {
     min-width: 70%;
 }
-.childMin80 {
+.min-width-80percent {
     min-width: 80%;
 }
-.childMin90 {
+.min-width-90percent {
     min-width: 90%;
 }
-.childMin100 {
+.min-width-100percent {
     min-width: 100%;
 }

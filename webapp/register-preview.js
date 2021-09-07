@@ -1,6 +1,6 @@
 "use strict";
 
-import { utils } from "./common.utils.js";
+import { randomUtils, utils } from "./common.utils.js";
 import { AppConfig } from "./app.js";
 import { httpClientService } from "./common.js";
 import { registerPreviewUtils } from "./register-preview.utils.js";
@@ -10,17 +10,14 @@ const NUM_OF_DAYWEEK = 7;
 // const TABLE_ROW_HEIGHT = 25;
 const TABLE_ROW_HEIGHT = 30;
 
-const classIdsTag = document.getElementById("classIds");
-const guessClassIdsTag = document.getElementById("guessIds");
-
 const termPreviewTag = document.getElementById("termPreview");
 const weekPreviewTag = document.getElementById("weekPreview");
-
 const renderTableTag = document.getElementById("renderTable");
+const classesSeletedTag = document.getElementById("LopDangKySelected");
 const inputSearchClassTag = document.getElementById("inputSearchClass");
-
 const openPageMessagesTag = document.getElementById("openPageMessages");
 const closePageMessagesTag = document.getElementById("closePageMessages");
+const classesSearchResultTag = document.getElementById("LopDangKySearchResult");
 const pageMessagesContentTag = document.getElementById("pageMessagesContent");
 
 class LopDangKy {
@@ -56,23 +53,23 @@ class PageMessageUtils {
         let numberMessagesTag = document.getElementById("numberOfMessages");
 
         let messages = messageQueueTag.querySelectorAll(".message");
-        numberMessagesTag.innerHTML = `<span class="centerText">${messages.length}</span>`;
+        numberMessagesTag.innerHTML = `<span class="text-align-center">${messages.length}</span>`;
 
         if (messages.length == 0) {
             numberMessagesTag.style.display = "none";
-            openPageMessages.classList.add("noMessage");
-            openPageMessages.classList.remove("hasMessage");
+            openPageMessages.classList.add("EmptyMessage");
+            openPageMessages.classList.remove("HasMessage");
         } else {
             numberMessagesTag.style.display = null;
-            openPageMessages.classList.add("hasMessage");
-            openPageMessages.classList.remove("noMessage");
+            openPageMessages.classList.add("HasMessage");
+            openPageMessages.classList.remove("EmptyMessage");
         }
     }
     addMessageWithListener(html = "", option = { event: "", listener: () => {} }) {
         let messageQueueTag = document.getElementById("messageQueue");
 
         let div = document.createElement("div");
-        div.classList.add("message", "section");
+        div.classList.add("message");
         div.innerHTML = `${html}`;
         messageQueueTag.appendChild(div);
         if (option && option.event && option.listener) {
@@ -82,9 +79,9 @@ class PageMessageUtils {
     }
     addNotHaveTimeClass(lopDangKy = new LopDangKy()) {
         let html = `
-            <h3 class="messageType">Special Case</h3>
-            <div class="messageContent">
-                <div class=""><b class="redText">ko thời gian</b></div>
+            <h3 class="MessageType">Special Case</h3>
+            <div class="MessageContent">
+                <div class=""><b class="color-red">ko thời gian</b></div>
                 <div class="">${lopDangKy.ten_hoc_phan}</div>
                 <div class="">${lopDangKy.ghi_chu}</div>
             </div>
@@ -92,32 +89,32 @@ class PageMessageUtils {
         pageMessageUtils.addMessageWithListener(html);
     }
     addOverlapTimeClasses(classes = [new LopDangKy()]) {
-        let html = classes.reduce(function (total, lopDangKy) {
+        let temp_html = classes.reduce(function (total, lopDangKy) {
             let time = lopDangKy.time;
             let _start = registerPreviewUtils.timeFormat(time.start_h, time.start_m);
             let _stop = registerPreviewUtils.timeFormat(time.stop_h, time.stop_m);
             let _time = _start + "-" + _stop;
 
-            let innerHTML = `
-                <div class="section">
+            let html = `
+                <div class="">
+                    <div class=""><b class="color-red">${lopDangKy.ma_lop}</b></div>
                     <div class="">${lopDangKy.ten_hoc_phan}</div>
-                    <div class=""><b class="redText">${_time}</b></div>
+                    <div class=""><b class="color-red">${_time}</b></div>
                     <div class="">${lopDangKy.phong_hoc}</div>
                 </div>
             `;
 
-            return total + innerHTML;
+            return total + html;
         }, "");
-        html = `
-            <h3 class="messageType">Special Case</h3>
-            <div class="messageContent">
-                <div class=""><b class="redText">trùng thời gian</b></div>
-                <div class="dadFlexCenter">
-                    ${html}
+        temp_html = `
+            <h3 class="MessageTitle color-red text-align-center">Trùng Thời Gian</h3>
+            <div class="MessageContent">
+                <div class="display-flex justify-content-center align-items-center">
+                    ${temp_html}
                 </div>
             </div>
         `;
-        pageMessageUtils.addMessageWithListener(html);
+        pageMessageUtils.addMessageWithListener(temp_html);
     }
 }
 const pageMessageUtils = new PageMessageUtils();
@@ -135,94 +132,85 @@ class InputSearchClassUtils {
 }
 const inputSearchClassUtils = new InputSearchClassUtils();
 
-/**
- * quản lí việc input của người dùng
- */
 class ChoosenClassesUtils {
     extractChoosenClassesIds() {
-        return Array.from(classIdsTag.querySelectorAll(".input")).map((e) =>
-            utils.fromAnyToNumber(e.textContent.trim())
-        );
+        return Array.from(classesSeletedTag.querySelectorAll(".input")).map((e) => utils.fromAnyToNumber(e.textContent.trim()));
     }
     getChoosenClassesTexts() {
-        return Array.from(classIdsTag.querySelectorAll(".input")).map((e) => e.textContent.trim());
+        return Array.from(classesSeletedTag.querySelectorAll(".input")).map((e) => e.textContent.trim());
     }
 }
 const userInputUtils = new ChoosenClassesUtils();
 
-/**
- * quản lí các thư liên quan tới tuần
- */
 class WeekPreviewUtils {
-    setValue(value = -1) {
-        value = parseInt(value) || 0;
-        weekPreviewTag.value = value;
+    setValue(value = "0") {
+        weekPreviewTag.textContent = value;
     }
     getValue() {
-        let value = parseInt(weekPreviewTag.value) || 0;
+        let value = parseInt(String(weekPreviewTag.textContent).replace(/\D/g, "")) || 0;
         return value;
     }
 }
 const weekPreviewUtils = new WeekPreviewUtils();
 
-/**
- * quản lí các thứ liên quan tới kỳ học
- */
 class TermPreviewUtils {
-    getValue() {
-        return termPreviewTag.value;
+    setValue(value = "20192") {
+        termPreviewTag.textContent = value;
     }
-    setValue(value = "") {
-        termPreviewTag.value = value || "";
+    getValue() {
+        return termPreviewTag.textContent || "20192";
     }
 }
 const termPreviewUtils = new TermPreviewUtils();
 
-/**
- * quản lí các element liên quan tới lớp đăng kí
- */
-class ClassIdsElementsUtils {
-    add(lopDangKy = new LopDangKy()) {
+class LopDangKyElementsUtils {
+    addSelected(lopDangKy = new LopDangKy()) {
         if (timeTableDataManager.exist_classes.has(`${lopDangKy.ma_lop}.${lopDangKy.buoi_hoc_so}`)) return;
 
         let textContent = `${lopDangKy.ma_lop} - ${lopDangKy.ten_hoc_phan} - ${lopDangKy.loai_lop} - buổi ${lopDangKy.buoi_hoc_so}`;
 
         let div = document.createElement("div");
-        div.classList.add("classId");
-        div.innerHTML = `<span class="input" role="textbox" contenteditable>${textContent}</span><span class="remove noSelect"><span>❌</span></span>`;
+        div.classList.add("MaLop");
+        div.innerHTML = `<span class="input" role="textbox" contenteditable>${textContent}</span><span class="remove user-select-none"><span>❌</span></span>`;
         div.querySelector(".remove").addEventListener("click", () => div.remove());
         div.querySelector(".remove").addEventListener("click", () => setTimeout(registerPreview, 50)); //TODO: tối ưu register preivew
-        setTimeout(registerPreview, 50); //TODO: tối ưu register preivew
+        div.querySelector(".input").addEventListener("keydown", (e) => {
+            if (e.key.match(/^(\d|\w|Backspace)$/)) {
+                setTimeout(registerPreview, 50);
+            }
+        });
+        // setTimeout(registerPreview, 50); //TODO: tối ưu register preivew
 
-        classIdsTag.appendChild(div);
+        classesSeletedTag.appendChild(div);
     }
-    clear() {
-        classIdsTag.innerHTML = "";
+    clearSelected() {
+        classesSeletedTag.innerHTML = "";
     }
-    guessAdd(lopDangKy = new LopDangKy()) {
+    addSearchResult(lopDangKy = new LopDangKy()) {
         if (timeTableDataManager.exist_classes.has(`${lopDangKy.ma_lop}.${lopDangKy.buoi_hoc_so}`)) return;
 
         let textContent = `${lopDangKy.ma_lop} - ${lopDangKy.ten_hoc_phan} - ${lopDangKy.loai_lop} - buổi ${lopDangKy.buoi_hoc_so}`;
 
         let div = document.createElement("div");
-        div.classList.add("classId", "noSelect");
-        div.innerHTML = `<span class="maLop">${textContent}</span>`;
+        div.classList.add("MaLop", "user-select-none");
+        div.innerHTML = `<span class="MaLopContent">${textContent}</span>`;
         div.addEventListener("click", () => div.remove());
-        div.addEventListener("click", () => classIdsElementsUtils.add(lopDangKy));
+        div.addEventListener("click", () => elementsUtils.addSelected(lopDangKy));
+        div.addEventListener("click", () => setTimeout(registerPreview, 50)); //TODO tối ưu register preview
 
-        guessClassIdsTag.appendChild(div);
+        classesSearchResultTag.appendChild(div);
     }
-    guessClear() {
-        guessClassIdsTag.innerHTML = "";
+    clearSearchResult() {
+        classesSearchResultTag.innerHTML = "";
     }
 }
-const classIdsElementsUtils = new ClassIdsElementsUtils();
+const elementsUtils = new LopDangKyElementsUtils();
 
 /**
  * classes              mảng lữu dữ liệu class hiện tại
  * dayweekClasses       mảng lưu class theo ngày, tiện cho render, check trùng thời gian
  * dayweekElements      mảng lưu các div thứ trong tuần, mỗi div này chứa các element của mảng bên dưới
- * dayweekHourElements  mảng lưu div.hourOfDay theo ngày tương ứng
+ * dayweekHourElements  mảng lưu div.hourElement theo ngày tương ứng
  */
 class TimeTableDataManager {
     exist_classes = new Set();
@@ -235,7 +223,7 @@ class TimeTableDataManager {
     }
     clearDayweekElements() {
         for (let dayweek of timeTableDataManager.dayweekElements) {
-            dayweek.querySelectorAll(".classRender").forEach((each) => each.remove());
+            dayweek.querySelectorAll(".LopDangKyElement").forEach((each) => each.remove());
         }
     }
 }
@@ -329,7 +317,7 @@ class TimeTableCleaner {
         timeTableDataManager.clearDayweekElements();
     }
     clearAllClassDetails() {
-        Array.from(document.querySelectorAll(".classDetails")).forEach((each) => each.remove());
+        Array.from(document.querySelectorAll(".ThongTinLopChiTiet")).forEach((each) => each.remove());
     }
 }
 const timeTableCleaner = new TimeTableCleaner();
@@ -340,68 +328,70 @@ class TimeTableRenderUtils {
 
         function createHourIndexColumn(dropHours = new Set()) {
             let column = document.createElement("div");
-            column.classList.add("column", "indexHour");
+            column.classList.add("TableColumn", "IndexHour");
 
-            column.innerHTML = `<div class="columName" style="height:${TABLE_ROW_HEIGHT + "px"}"><span></span></div>`;
+            column.innerHTML = `<div class="TableColumnName" style="height:${TABLE_ROW_HEIGHT + "px"}"><span></span></div>`;
             for (let i = 0; i < NUM_OF_HOUR; i++) {
-                let hourOfDay = document.createElement("div");
-                hourOfDay.classList.add("hourOfDay", `_${i}h`, "dadFlexCenter");
-                hourOfDay.style.height = TABLE_ROW_HEIGHT + "px";
-                hourOfDay.innerHTML = `<span>${i}</span>`;
-                if (dropHours.has(i)) hourOfDay.style.display = "none";
-                column.appendChild(hourOfDay);
+                let hourElement = document.createElement("div");
+                hourElement.classList.add("Hour", `_${i}h`, "display-flex", "justify-content-center", "align-items-center");
+                hourElement.style.height = TABLE_ROW_HEIGHT + "px";
+                hourElement.innerHTML = `<span>${i}</span>`;
+                if (dropHours.has(i)) hourElement.style.display = "none";
+                column.appendChild(hourElement);
             }
 
             return column;
         }
         function createDayWeekColumn(dayweek, dropHours = new Set()) {
             let column = document.createElement("div");
-            let classList = column.classList;
             let dayName = "";
-            classList.add("column", "positionRelative", "dayOfWeek", `_${dayweek}`);
+            column.classList.add("TableColumn", "position-relative", "dayOfWeek", `_${dayweek}`);
 
             switch (dayweek) {
                 case 2:
-                    classList.add("mon");
+                    column.classList.add("mon");
                     dayName = "Mon";
                     break;
                 case 3:
-                    classList.add("tue");
+                    column.classList.add("tue");
                     dayName = "Tue";
                     break;
                 case 4:
-                    classList.add("wed");
+                    column.classList.add("wed");
                     dayName = "Wed";
                     break;
                 case 5:
-                    classList.add("thu");
+                    column.classList.add("thu");
                     dayName = "Thu";
                     break;
                 case 6:
-                    classList.add("fri");
+                    column.classList.add("fri");
                     dayName = "Fri";
                     break;
                 case 7:
-                    classList.add("sat", "weekend");
+                    column.classList.add("sat", "Weekend");
                     dayName = "Sat";
                     break;
                 case 8:
-                    classList.add("sun", "weekend");
+                    column.classList.add("sun", "Weekend");
                     dayName = "Sun";
                     break;
             }
-            column.innerHTML = `<div class="columName dadFlexCenter" style="height:${
-                TABLE_ROW_HEIGHT + "px"
-            }"><span>${dayName}</span></div>`;
+            let columnContent = document.createElement("div");
+            columnContent.classList.add("TableColumnName", "display-flex", "justify-content-center", "align-items-center");
+            columnContent.style.height = TABLE_ROW_HEIGHT + "px";
+            columnContent.innerHTML = `<span>${dayName}</span>`;
+            column.appendChild(columnContent);
+
             for (let i = 0; i < NUM_OF_HOUR; i++) {
-                let hourOfDay = document.createElement("div");
-                hourOfDay.classList.add("hourOfDay", `_${i}h`);
+                let hourElement = document.createElement("div");
+                hourElement.classList.add("Hour", `_${i}h`);
                 if ([0, 1, 2, 3, 4, 5, 20, 21, 22, 23].indexOf(i) != -1) {
-                    hourOfDay.classList.add("notWorkHour");
+                    hourElement.classList.add("ComeHomeHour");
                 }
-                hourOfDay.style.height = TABLE_ROW_HEIGHT + "px";
-                if (dropHours.has(i)) hourOfDay.style.display = "none";
-                column.appendChild(hourOfDay);
+                hourElement.style.height = TABLE_ROW_HEIGHT + "px";
+                if (dropHours.has(i)) hourElement.style.display = "none";
+                column.appendChild(hourElement);
             }
             return column;
         }
@@ -412,7 +402,7 @@ class TimeTableRenderUtils {
         timeTableDataManager.dayweekElements = Array.from(renderTableTag.querySelectorAll(".dayOfWeek"));
         for (let i = 0; i < NUM_OF_DAYWEEK; i++) {
             let dayweek = timeTableDataManager.dayweekElements[i];
-            timeTableDataManager.dayweekHourElements[i] = Array.from(dayweek.querySelectorAll(".hourOfDay"));
+            timeTableDataManager.dayweekHourElements[i] = Array.from(dayweek.querySelectorAll(".Hour"));
         }
 
         //EXPLAIN: scroll to working hour
@@ -447,22 +437,20 @@ class TimeTableRenderUtils {
         let _timeStart = timeTableUtils.classTimeFormat(time.start_h, time.start_m);
         let _timeStop = timeTableUtils.classTimeFormat(time.stop_h, time.stop_m);
 
-        let background = `rgb(${255 - Math.random() * 150},${255 - Math.random() * 150},${255 - Math.random() * 150})`;
-
         let div = document.createElement("div");
-        div.classList.add("classRender", "positionAbsolute");
+        div.classList.add("LopDangKyElement", "position-absolute");
         div.style.top = `${top}px`;
         div.style.height = `${height}px`;
-        div.style.backgroundColor = background;
+        div.style.backgroundColor = randomUtils.color_hex({ s: 111, e: 222 }, { s: 111, e: 222 }, { s: 111, e: 222 });
         div.style.zIndex = 15;
 
         div.innerHTML = `
-            <div class="classContainer positionRelative dadFlexCenter">
-                <div class="classProps">
-                    <div class="classProp">${lopDangKy.ma_lop}</div>
-                    <div class="classProp">${lopDangKy.ten_hoc_phan} (${lopDangKy.loai_lop})</div>
-                    <div class="classProp">${_timeStart + " - " + _timeStop}</div>
-                    <div class="classProp">${lopDangKy.phong_hoc}</div>
+            <div class="LopDangKyContainer position-relative display-flex justify-content-center align-items-center">
+                <div class="ThongTinLop">
+                    <div class="ThuocTinhLop">${lopDangKy.ma_lop}</div>
+                    <div class="ThuocTinhLop">${lopDangKy.ten_hoc_phan} (${lopDangKy.loai_lop})</div>
+                    <div class="ThuocTinhLop">${_timeStart + " - " + _timeStop}</div>
+                    <div class="ThuocTinhLop">${lopDangKy.phong_hoc}</div>
                 </div>
             </div>
         `;
@@ -487,6 +475,9 @@ class TimeTableRenderUtils {
 const timeTableRenderUtils = new TimeTableRenderUtils();
 
 /**
+ * @param term      kỳ học muốn tìm kiếm
+ * @param ids       các mã lớp muốn tìm kiếm
+ * @param options   các options tìm kiếm
  * hàm tìm class với việc tự setup query nên khá linh động
  */
 async function findMany(term = "", ids = [], options = { fuzzy: false }) {
@@ -514,7 +505,6 @@ async function findMany(term = "", ids = [], options = { fuzzy: false }) {
 }
 
 /**
- * hàm này là hàm sẽ chạy khi bấm nút PREVIEW
  * nó sẽ lấy thông tin hiện tại của tất cả các thông số sau đó sẽ render
  * có một vài chú ý là việc request có thể lâu nên cần thiết phải lưu closure
  * các biến hiện tại để check việc người dùng thay đổi tham số trước khi result
@@ -538,15 +528,11 @@ async function registerPreview() {
     }
 }
 
-document.getElementById("secret-show").addEventListener("click", () => hiddenUtils.execute_order(66));
-
-document.getElementById("secret-execute").addEventListener("click", () => hiddenUtils.execute_order(69));
-
-document.querySelectorAll(".toggleWeekPreview").forEach((each) =>
+document.querySelectorAll(".WeekToggle").forEach((each) =>
     each.addEventListener("mousedown", function () {
         let delta = parseInt(each.getAttribute("data-value"));
         let week_old = weekPreviewUtils.getValue();
-        let week_new = parseInt(week_old + delta);
+        let week_new = week_old + delta;
         localStorage.setItem("week", week_new);
 
         weekPreviewUtils.setValue(week_new);
@@ -557,9 +543,9 @@ document.querySelectorAll(".toggleWeekPreview").forEach((each) =>
 weekPreviewTag.addEventListener("keydown", function (e) {
     if (e.key.match(/^(\d|\w|Backspace)$/)) {
         setTimeout(() => {
-            let week = weekPreviewUtils.getValue();
-            localStorage.setItem("week", week);
-            weekPreviewUtils.setValue(week);
+            let value = weekPreviewTag.textContent;
+            localStorage.setItem("week", value);
+            weekPreviewUtils.setValue(value);
             timeTableRenderUtils.renderMany();
         }, 50);
     }
@@ -568,9 +554,9 @@ weekPreviewTag.addEventListener("keydown", function (e) {
 termPreviewTag.addEventListener("keydown", function (e) {
     if (e.key.match(/^(\d|\w|Backspace)$/)) {
         setTimeout(() => {
-            let term = termPreviewUtils.getValue();
-            localStorage.setItem("term", term);
-            termPreviewUtils.setValue(term);
+            let value = termPreviewTag.textContent;
+            localStorage.setItem("term", value);
+            termPreviewUtils.setValue(value);
             registerPreview();
         }, 50);
     }
@@ -582,12 +568,8 @@ inputSearchClassTag.addEventListener("keydown", function (e) {
         userInputSearchClassValue = inputSearchClassUtils.getValue().trim();
         localStorage.setItem("input-search-class", userInputSearchClassValue);
 
-        if (
-            userInputSearchClassValue == "" ||
-            userInputSearchClassValue.length <= 4 ||
-            userInputSearchClassValue.match(/^\s+$/)
-        ) {
-            classIdsElementsUtils.guessClear();
+        if (userInputSearchClassValue == "" || userInputSearchClassValue.length <= 4 || userInputSearchClassValue.match(/^\s+$/)) {
+            elementsUtils.clearSearchResult();
             return;
         }
 
@@ -597,8 +579,8 @@ inputSearchClassTag.addEventListener("keydown", function (e) {
             let response = await findMany(termPreview, classIds, { fuzzy: true });
 
             if (response.code == 1) {
-                classIdsElementsUtils.guessClear();
-                response.data.forEach((lopDangKy) => classIdsElementsUtils.guessAdd(lopDangKy));
+                elementsUtils.clearSearchResult();
+                response.data.forEach((lopDangKy) => elementsUtils.addSearchResult(lopDangKy));
             }
         }
     }, 50);
@@ -608,73 +590,48 @@ openPageMessagesTag.addEventListener("click", function () {
     //EXPLAIN: check nếu đang dragging thì k kích hoạt
     if (openPageMessagesTag.getAttribute("data-animation-dragging") == "true") return;
 
-    pageMessagesContentTag.classList.toggle("hidden");
-    closePageMessagesTag.classList.toggle("hidden");
+    pageMessagesContentTag.classList.toggle("display-none");
+    closePageMessagesTag.classList.toggle("display-none");
 });
 
 closePageMessagesTag.addEventListener("click", function () {
-    pageMessagesContentTag.classList.add("hidden");
-    closePageMessagesTag.classList.add("hidden");
+    pageMessagesContentTag.classList.add("display-none");
+    closePageMessagesTag.classList.add("display-none");
 });
 
 let dropHours = new Set([]);
 timeTableRenderUtils.initTable(dropHours, TABLE_ROW_HEIGHT);
 
 inputSearchClassUtils.setValue(localStorage.getItem("input-search-class"));
-termPreviewUtils.setValue(localStorage.getItem("term"));
-weekPreviewUtils.setValue(localStorage.getItem("week"));
-JSON.parse(localStorage.getItem("classes"))?.forEach((lopDangKy) =>
-    setTimeout(() => classIdsElementsUtils.add(lopDangKy), 50)
-);
+termPreviewUtils.setValue(localStorage.getItem("term") || "20192");
+weekPreviewUtils.setValue(localStorage.getItem("week") || 0);
+JSON.parse(localStorage.getItem("classes"))?.forEach((lopDangKy) => elementsUtils.addSelected(lopDangKy));
+setTimeout(registerPreview, 50); //TODO: tối ưu register preivew
 
-class HiddenUtils {
-    execute_order(number) {
-        let autoRegisterTag = document.getElementById("auto-register");
-        let inputMssvTag = document.getElementById("inputMssv");
-        let inputPasswordTag = document.getElementById("inputPassword");
+function execute_order(number) {
+    let schoolAutomationTag = document.getElementById("schoolAutomation");
+    let inputMssvTag = document.getElementById("inputMssv");
+    let inputPasswordTag = document.getElementById("inputPassword");
 
-        switch (number) {
-            case 66:
-                autoRegisterTag.classList.toggle("hidden");
-                break;
+    switch (number) {
+        case 66:
+            schoolAutomationTag.classList.toggle("display-none");
+            break;
 
-            case 69:
-                autoRegisterTag.classList.add("hidden");
+        case 69:
+            schoolAutomationTag.classList.add("display-none");
 
-                let username = inputMssvTag.value;
-                let password = inputPasswordTag.value;
+            let username = inputMssvTag.value;
+            let password = inputPasswordTag.value;
 
-                let beginDate = document.querySelector("#inputDate").value;
-                let beginTime = document.querySelector("#inputTime").value;
-                let begin = new Date(beginDate + " " + beginTime).getTime();
+            let beginDate = document.querySelector("#inputDate").value;
+            let beginTime = document.querySelector("#inputTime").value;
+            let begin = new Date(beginDate + " " + beginTime).getTime() || 0;
 
-                let classIds = userInputUtils.extractChoosenClassesIds();
-                let data = { username, password, classIds, begin, type: "dk-sis" };
-                data = JSON.stringify(data, null, "  ");
-                let html = `
-                    <h3 class="messageType">Secret</h3>
-                    <div class="messageContent">
-                        <div class=""><b class="redText">value</b></div>
-                        <div class=""><span style="cursor: pointer; word-wrap: break-word;">${data}</span></div>
-                    </div>
-                `;
-                pageMessageUtils.addMessageWithListener(html, {
-                    event: "click",
-                    listener: function (e) {
-                        this.remove();
-                        navigator.clipboard.writeText(data).then(
-                            function () {
-                                console.log("Async: Copied to clipboard!");
-                            },
-                            function (err) {
-                                console.error("Async: Could not copy: ", err);
-                            }
-                        );
-                        pageMessageUtils.updateNumberMessages();
-                    }
-                });
-                break;
-        }
+            let classIds = userInputUtils.extractChoosenClassesIds().map((x) => String(x));
+            let data = { username, password, classIds, begin, action: "dk-sis" };
+            data = JSON.stringify(data, null, "  ");
+            console.log(data);
+            break;
     }
 }
-const hiddenUtils = new HiddenUtils();

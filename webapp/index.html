@@ -1,155 +1,125 @@
 <!DOCTYPE html>
 <html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>index.html</title>
 
-    <title>index.html</title>
+        <link rel="manifest" href="manifest.json" />
 
-    <link rel="manifest" href="manifest.json">
+        <link rel="stylesheet" href="common.css" />
+        <link rel="stylesheet" href="common.custom.css" />
+        <link rel="stylesheet" href="common.animation.css" />
+        <link rel="stylesheet" href="app.css" />
+        <link rel="stylesheet" href="register-preview.css" />
 
-    <link rel="stylesheet" href="common.css">
-    <link rel="stylesheet" href="common.animation.css">
-    <link rel="stylesheet" href="app.css">
-    <link rel="stylesheet" href="register-preview.css">
+        <script type="module" defer src="common.js"></script>
+        <script type="module" defer src="common.animation.js"></script>
+        <script type="module" defer src="app.js"></script>
+        <script type="module" defer src="register-preview.utils.js"></script>
+        <script type="module" defer src="register-preview.js"></script>
+    </head>
 
-    <script type="module" defer src="common.js"></script>
-    <script type="module" defer src="common.animation.js"></script>
-    <script type="module" defer src="app.js"></script>
-    <script type="module" defer src="register-preview.utils.js"></script>
-    <script type="module" defer src="register-preview.js"></script>
-</head>
-
-<body>
-    <!-- SECTION: page message -->
-    <div id="pageMessagesContent" class="hidden" style="top: 0; right: 0;">
-        <div class="dadFlexCenter"><span class="redText">Message(s)</span></div>
-        <div class="section">
-            <div class="dadFlexWrapCenterHor" id="messageQueue">
-                <!-- <div class="message">
-                    <h3 class="messageType">Notification</h3>
-                    <div class="messageContent">
-                        <div class="classProps dadFlexCenterWrap">
-                            <div class="sonFlexWrapCenter"><b class="type">ko THỜI GIAN</b></div>
-                            <div class="tenHocPhan classProp sonFlexWrapCenter">Project I</div>
-                            <div class="ghiChu classProp sonFlexWrapCenter">Bộ môn KHMT</div>
-                        </div>
-                    </div>
-                </div> -->
+    <body>
+        <!-- SECTION: page message -->
+        <div
+            id="openPageMessages"
+            class="EmptyMessage display-flex justify-content-center align-items-center background-color-green-neon"
+            style="right: 15px; top: 15px"
+        >
+            <div class="display-flex justify-content-center align-items-center">
+                <span class="bell-icon-normal" style="width: 25px; height: 25px"></span>
+                <span class="bell-icon-ring" style="width: 25px; height: 25px"></span>
+            </div>
+            <div id="numberOfMessages" class="position-absolute display-flex justify-content-center align-items-center" style="display: none">
+                <span class="text-align-center">0</span>
             </div>
         </div>
-    </div>
-    <div id="openPageMessages" class="noMessage dadFlexCenter drag-to-move" style="top: 15px; right: 15px">
-        <div class="dadFlexCenter drag-to-move-header">
-            <span class="bell-icon-normal" style="width: 25px; height: 25px"></span>
-            <span class="bell-icon-ring" style="width: 25px; height: 25px"></span>
-        </div>
-        <div class="positionAbsolute dadFlexCenter" style="display: none" id="numberOfMessages">
-            <span class="centerText">0</span>
-        </div>
-    </div>
-    <div id="closePageMessages" class="hidden"></div>
-
-    <!-- SECTION: page content -->
-    <div class="page child100">
-        <div class="headPage">
-            <div class="section">
-                <h1 class="sectionTitle">Xem Truoc Thoi Khoa Bieu</h1>
+        <div id="pageMessagesContent" class="display-none color-green-neon" style="top: 0; right: 0">
+            <div class="display-flex flex-wrap-wrap justify-content-center" id="messageQueue">
+                <!-- chứa page message -->
             </div>
         </div>
-        <div class="bodyPage">
+        <div id="closePageMessages" class="display-none"></div>
+        <!-- SECTION: main page content -->
+        <div class="margin-auto width-100percent">
+            <div class="text-align-center">
+                <h1 class="CustomTitle">Xem Truoc Thoi Khoa Bieu</h1>
+            </div>
             <!-- SECTION: INPUT -->
-            <div class="section">
-                <div class="section">
-                    <div class="section">
-                        <h5 style="color: var(--green_neon)">
-                            <span>nhập vào mã lớp (một hoặc nhiều)</span><br>
-                            <span>VD: "20900", "14600 - lớp xxx", "14600, 20900 LT + BT"</span><br>
-                            <span>sau đó chọn trong kết quả tìm kiếm và thế là hết</span><br>
-                        </h5>
-                    </div>
-                    <div class="section dadFlexCenter positionRelative">
-                        <input class="child60" type="text" autocomplete="off" id="inputSearchClass" placeholder="ma lop" />
-                        <div class="positionAbsolute dadFlexWrap child60" id="guessIds">
-                            <!-- <div class="classId">
-                                    <span onclick="addClassId(this.textContent);this.parentElement.remove()" class="maLop">1234</span>
-                                </div> -->
-                        </div>
-                    </div>
-                    <div class="dadFlexCenter">
-                        <span class="noSelect" style="color: var(--green_neon);">or</span>
-                    </div>
-                    <div class="dadFlexCenter">
-                        <div class="section dadFlexCenter positionRelative">
-                            <span class="noSelect" style="color: var(--green_neon)">
-                                <code id="secret-show" style="cursor: pointer">(test)</code>
-                            </span>
-                        </div>
-                    </div>
-                    <div id="auto-register" class="hidden">
-                        <div class="section dadFlexCenter">
-                            <input type="text" autocomplete="off" id="inputMssv" placeholder="mssv" />
-                            <input type="text" autocomplete="off" id="inputPassword" placeholder="password" />
-                            <input type="date" id="inputDate" />
-                            <input type="time" id="inputTime" />
-                        </div>
-                        <div class="section dadFlexCenter">
-                            <button id="secret-execute" class="neonButtonClick smallButton">generate</button>
-                        </div>
-                    </div>
+
+            <div id="schoolAutomation" class="display-none">
+                <div class="display-flex justify-content-center align-items-center">
+                    <input type="text" autocomplete="off" id="inputMssv" placeholder="mssv" />
+                    <input type="text" autocomplete="off" id="inputPassword" placeholder="password" />
+                    <input type="date" id="inputDate" />
+                    <input type="time" id="inputTime" />
                 </div>
-                <div class="dadFlexWrap child80" id="classIds">
-                    <!-- <div class="classId">
-                            <span class="input" role="textbox" contenteditable="">118586</span>
-                            <span class="remove" onclick="removeClassId(this)"><span>❌</span></span>
-                        </div> -->
+                <div class="display-flex justify-content-center align-items-center">
+                    <button id="secret-execute" class="CustomNeonButtonClick font-size-20px">generate</button>
                 </div>
             </div>
-            <!-- SECTION: TERM -->
-            <div class="dadFlexCenter">
-                <input type="text" id="termPreview" placeholder="ky hoc">
+            <h5 class="text-align-center color-green-neon" style="margin: 30px 0">
+                <span>chọn kỳ học (<a class="color-green-neon" href="#termPreview">sửa giá trị này</a>)</span><br />
+            </h5>
+            <!-- SECTION: term -->
+            <div class="display-flex justify-content-center align-items-center" style="margin: 20px 0">
+                <span class="text-align-center color-green-neon" id="termPreview" role="textbox" contenteditable>20192</span>
             </div>
-            <!-- SECTION: WEEK -->
-            <div class="section weekToggle dadFlexCenter">
-                <div class="section">
-                    <div class="dadFlexWrapCenterHor">
-                        <button class="neonButtonClickSimple toggleWeekPreview" data-value="-1">
-                            <div class="weekPreview_prev"></div>
-                        </button>
-                        <span class="weekPreviewTitle">week</span>
-                        <input type="text" id="weekPreview" value="0">
-                        <button class="neonButtonClickSimple toggleWeekPreview" data-value="1">
-                            <div class="weekPreview_next"></div>
-                        </button>
-                    </div>
+            <h5 class="text-align-center color-green-neon" style="margin: 30px 0">
+                <span>chọn tuần học (<a class="color-green-neon" href="#weekPreview">sửa giá trị này</a>)</span><br />
+            </h5>
+            <!-- SECTION: week -->
+            <div class="display-flex justify-content-center align-items-center" style="margin: 20px 0">
+                <div class="display-flex flex-wrap-wrap justify-content-center color-green-neon">
+                    <button class="CustomNeonButtonClickSimple WeekToggle" data-value="-1">
+                        <div class="WeekTogglePrev"></div>
+                    </button>
+                    <span id="weekPreviewTitle">week</span>
+                    <span role="textbox" id="weekPreview" contenteditable class="text-align-center"></span>
+                    <button class="CustomNeonButtonClickSimple WeekToggle" data-value="1">
+                        <div class="WeekToggleNext"></div>
+                    </button>
                 </div>
             </div>
-            <!-- SECTION: TABLE -->
-            <div class="renderContainer" style="min-height: 300px;">
-                <div class="renderTable positionRelative dadFlex centerText" id="renderTable">
+            <h5 class="text-align-center color-green-neon">
+                <span><a class="color-green-neon" href="#inputSearchClass">nhập vào</a> mã lớp (một hoặc nhiều)</span>
+                <span>VD: 20900, 14600 - lớp thầy tuấn, 14600, 20900 LT + BT</span>
+                <br />
+                <span>sau đó chọn trong kết quả tìm kiếm và thế là hết</span><br />
+            </h5>
+            <!-- SECTION: search -->
+            <div class="display-flex justify-content-center align-items-center position-relative" style="margin: 20px 0">
+                <input class="width-60percent color-green-neon" type="text" autocomplete="off" id="inputSearchClass" placeholder="ma lop" />
+                <div class="position-absolute display-flex flex-wrap-wrap width-60percent" id="LopDangKySearchResult">
+                    <!-- chứa kết quả tìm kiếm lớp -->
+                </div>
+            </div>
+            <!-- SECTION: seleted -->
+            <div class="display-flex flex-wrap-wrap width-80percent" id="LopDangKySelected">
+                <!-- chứa các lớp đang được chọn để render -->
+            </div>
+            <!-- SECTION: table -->
+            <div id="renderContainer" style="min-height: 700px">
+                <div class="position-relative display-flex text-align-center" id="renderTable">
                     <!-- CAUTION: GENERATE TABLE -->
                 </div>
             </div>
-        </div>
-        <div class="footPage">
-            <div class="section">
-                <h6 style="color: var(--green_neon)">from IT1-04-K63 with ❤</h6>
-                <h2 style="color: var(--green_neon)">@contact</h2>
-                <div style="text-align: center">
-                    <a class="neonHover" target="_blank" href="https://facebook.com/tuana9a">
-                        <span>facebook.com/tuana9a</span>
-                    </a>
-                    <a class="neonHover" target="_blank" href="https://github.com/tuana9a">
-                        <span>github.com/tuana9a</span>
-                    </a>
-                    <a class="neonHover" href="javascript:void(0)">
-                        <span>tuana9a@gmail.com</span>
-                    </a>
-                </div>
+
+            <h5 class="text-align-center color-green-neon">from IT1-04 K63 with ❤</h5>
+            <h2 class="text-align-center color-green-neon">@contact</h2>
+            <div class="text-align-center">
+                <a class="CustomNeonText" target="_blank" href="https://facebook.com/tuana9a">
+                    <span>facebook.com/tuana9a</span>
+                </a>
+                <a class="CustomNeonText" target="_blank" href="https://github.com/tuana9a">
+                    <span>github.com/tuana9a</span>
+                </a>
+                <a class="CustomNeonText" href="javascript:void(0)">
+                    <span>tuana9a@gmail.com</span>
+                </a>
             </div>
         </div>
-    </div>
-</body>
-
+    </body>
 </html>

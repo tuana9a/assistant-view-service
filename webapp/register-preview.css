@@ -1,40 +1,33 @@
+:root {
+    --gray-faded: #424242;
+    --green-neon: #73ff00;
+    --black-neon: #000800;
+    --black-neon-faded: #000a00f3;
+    --green-neon-faded: #081000;
+    --color-now-dayweek: #eeff00;
+}
 * {
     margin: 0;
     padding: 0;
+    font-family: "Source Code Pro", monospace;
 }
+
 html {
     scroll-behavior: smooth;
     min-height: 101%;
 }
 body {
-    /* background-color:var(--black_neon); */
-    background-color: var(--page_background);
+    background-color: var(--gray-faded);
     /* touch-action: manipulation; */
     /* min-width: 720px; */
 }
 
-/* SECTION: page and other ====================================================================================== */
-.page {
-    margin: auto;
-}
-.headPage {
-    text-align: center;
-    margin: 20px 0;
-}
-.bodyPage {
-    margin: 20px auto;
-}
-.footPage {
-    text-align: center;
-    margin: 20px 0;
-}
-
 /* SECTION: page messages */
 #openPageMessages {
-    background-color: var(--green_neon);
-    --bell_button_size: 40px;
-    width: var(--bell_button_size);
-    height: var(--bell_button_size);
+    background-color: var(--green-neon);
+    --bell-button-size: 40px;
+    width: var(--bell-button-size);
+    height: var(--bell-button-size);
 
     cursor: pointer;
 
@@ -44,10 +37,6 @@ body {
 
     position: fixed;
     z-index: 22;
-}
-#openPageMessages .drag-to-move-header {
-    cursor: pointer;
-    padding: 5px;
 }
 #openPageMessages #numberOfMessages {
     background-color: red;
@@ -63,16 +52,16 @@ body {
     font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
 }
 
-#openPageMessages.hasMessage .bell-icon-normal {
+#openPageMessages.HasMessage .bell-icon-normal {
     display: none;
 }
-#openPageMessages.hasMessage .bell-icon-ring {
+#openPageMessages.HasMessage .bell-icon-ring {
     display: unset;
 }
-#openPageMessages.noMessage .bell-icon-normal {
+#openPageMessages.EmptyMessage .bell-icon-normal {
     display: unset;
 }
-#openPageMessages.noMessage .bell-icon-ring {
+#openPageMessages.EmptyMessage .bell-icon-ring {
     display: none;
 }
 
@@ -98,17 +87,16 @@ body {
     max-width: 25vw;
 
     border-radius: 0 0 5px 5px;
-    color: var(--green_neon);
 
-    background-color: var(--fade_black_neon);
+    background-color: var(--black-neon-faded);
 }
-#messageQueue .messageType {
-    background-color: var(--green_neon);
-    color: var(--black_neon);
+#messageQueue .MessageTitle {
+    /* background-color: var(--green-neon); */
     padding: 1px 4px;
     border-radius: 3px;
+    border: 1px solid var(--green-neon);
 }
-#messageQueue .messageContent {
+#messageQueue .MessageContent {
     min-width: 100px;
     max-width: 300px;
 
@@ -119,12 +107,23 @@ body {
     background-color: black;
     padding: 3px;
     margin: 2px;
-
-    border-radius: 5px;
-    border: 1px solid var(--green_neon);
 }
 
-#auto-register input {
+/* SECTION: user input */
+#inputSearchClass {
+    outline: none;
+    border: none;
+    border-radius: 5px;
+    color: var(--green-neon);
+    background-color: var(--black-neon);
+
+    padding: 5px 0px;
+    font-size: 17px;
+
+    text-align: center;
+    cursor: text;
+}
+#schoolAutomation input {
     border: 2px solid black;
     border-radius: 5px;
 
@@ -135,29 +134,15 @@ body {
     cursor: text;
 }
 
-#inputSearchClass {
-    outline: none;
-    border: none;
-    border-radius: 5px;
-    color: var(--green_neon);
-    background-color: var(--black_neon);
-
-    padding: 5px 0px;
-    font-size: 17px;
-
-    text-align: center;
-    cursor: text;
-}
-
-#guessIds {
+#LopDangKySearchResult {
     top: 100%;
-    background-color: var(--black_neon);
+    background-color: var(--black-neon);
     /* padding: 5px; */
     overflow-y: auto;
     border-radius: 5px;
     z-index: 21; /* make it higher than dayweek header */
 }
-#guessIds .classId {
+#LopDangKySearchResult .MaLop {
     width: fit-content;
     max-width: 100%;
     height: fit-content;
@@ -169,16 +154,16 @@ body {
     margin: 3px;
 
     border-radius: 5px;
-    background-color: var(--black_neon);
-    border: 1px solid var(--green_neon);
+    background-color: var(--black-neon);
+    border: 1px solid var(--green-neon);
 }
-#guessIds .classId .maLop {
-    color: var(--green_neon);
-    background-color: var(--black_neon);
+#LopDangKySearchResult .MaLop .MaLopContent {
+    color: var(--green-neon);
+    background-color: var(--black-neon);
+
     border: none;
     outline: none;
     border-radius: 4.5px;
-
     text-align: center;
 
     min-width: 50px;
@@ -188,20 +173,20 @@ body {
     vertical-align: middle;
     padding: 3px 5px;
 }
-#guessIds .classId .maLop:hover {
+#LopDangKySearchResult .MaLop .MaLopContent:hover {
     transition: 0.4s;
-    color: var(--black_neon);
-    background-color: var(--green_neon);
-    box-shadow: 0 0 10px 0px var(--green_neon);
+    color: var(--black-neon);
+    background-color: var(--green-neon);
+    box-shadow: 0 0 10px 0px var(--green-neon);
 }
 
-#classIds {
+#LopDangKySelected {
     min-width: 50%;
     max-width: 80%;
     min-height: 100px;
     margin: 10px auto;
 }
-#classIds .classId {
+#LopDangKySelected .MaLop {
     width: fit-content;
     max-width: 100%;
     height: fit-content;
@@ -211,12 +196,12 @@ body {
     justify-content: center;
     align-items: center;
     margin: 2px;
-    background-color: var(--black_neon);
-    box-shadow: 0 0 5px 1px var(--black_neon);
+    background-color: var(--black-neon);
+    box-shadow: 0 0 5px 1px var(--black-neon);
 }
-#classIds .classId .input {
-    color: var(--green_neon);
-    background-color: var(--black_neon);
+#LopDangKySelected .MaLop .input {
+    color: var(--green-neon);
+    background-color: var(--black-neon);
 
     border: none;
     outline: none;
@@ -231,93 +216,87 @@ body {
     vertical-align: middle;
     padding: 3px 5px;
 }
-#classIds .classId .remove {
+#LopDangKySelected .MaLop .remove {
     border-radius: 5px;
     font-size: 15px;
     padding: 5px 5px;
     vertical-align: middle;
     cursor: pointer;
 }
-#classIds .classId .remove:hover {
+#LopDangKySelected .MaLop .remove:hover {
     transition: 0.4s;
-    background-color: var(--green_neon);
-    box-shadow: 0 0 10px 0px var(--green_neon);
+    background-color: var(--green-neon);
+    box-shadow: 0 0 10px 0px var(--green-neon);
 }
 
 /* SECTION: timing, week, term, ... */
 #termPreview {
-    border: 2px solid black;
-    border-radius: 5px;
-
-    padding: 2px;
-    width: 150px;
-    font-size: 20px;
-    letter-spacing: 1px;
-
-    text-align: center;
-}
-.weekToggle .weekPreviewTitle {
-    font-size: 25px;
-    color: var(--green_neon);
-    letter-spacing: 5px;
-    text-shadow: -2px 2px 2px #767676;
-}
-.weekToggle #weekPreview {
-    text-align: center;
-    width: 100px;
-    background: none;
-    border: none;
     outline: none;
-    font-size: 50px;
-    color: var(--green_neon);
+    padding: 2px;
+    font-size: 40px;
+    min-width: 100px;
+    letter-spacing: 1px;
+}
+#weekPreviewTitle {
+    font-size: 25px;
+    color: var(--green-neon);
     letter-spacing: 5px;
     text-shadow: -2px 2px 2px #767676;
 }
-.weekToggle .toggleWeekPreview {
+#weekPreview {
+    outline: none;
+    min-width: 50px;
+    font-size: 50px;
+    letter-spacing: 5px;
+    color: var(--green-neon);
+    text-shadow: -2px 2px 2px #767676;
+}
+
+.WeekToggle {
     padding: 3px;
     margin: 3px;
 }
-.weekToggle .weekPreview_next {
+.WeekToggle .WeekToggleNext {
     width: 0;
     height: 0;
     --size: 10px;
     border-top: var(--size) solid transparent;
     border-right: var(--size) solid transparent;
     border-bottom: var(--size) solid transparent;
-    border-left: 15px solid var(--green_neon);
+    border-left: 15px solid var(--green-neon);
     transform: translateX(25%);
 }
-.weekToggle .weekPreview_prev {
+.WeekToggle .WeekTogglePrev {
     width: 0;
     height: 0;
     --size: 10px;
     border-top: var(--size) solid transparent;
-    border-right: 15px solid var(--green_neon);
+    border-right: 15px solid var(--green-neon);
     border-bottom: var(--size) solid transparent;
     border-left: var(--size) solid transparent;
     transform: translateX(-25%);
 }
 
-.renderContainer {
+#renderContainer {
     margin: auto;
     width: fit-content;
     max-width: 100%;
     overflow-x: auto;
     overflow-y: auto;
 }
-.renderContainer::-webkit-scrollbar {
+#renderContainer::-webkit-scrollbar {
     width: 3px;
     height: 3px;
 }
-.renderContainer::-webkit-scrollbar-track {
+#renderContainer::-webkit-scrollbar-track {
     background-color: black;
 }
-.renderContainer::-webkit-scrollbar-thumb {
+#renderContainer::-webkit-scrollbar-thumb {
     background: red;
 }
 
 /* SECTION: table building */
-.renderTable {
+#renderTable {
     /* CAUTION: không đc để overflow ở đây 
     vì nó làm mất cái sticky của hourIndex */
     width: fit-content;
@@ -325,88 +304,88 @@ body {
     background: #ffffff;
     color: black;
 }
-.renderTable .column {
+#renderTable .TableColumn {
     min-width: 100px;
     width: 11vw;
 }
-.renderTable .column.indexHour {
+
+#renderTable .TableColumn .TableColumnName {
+    box-sizing: border-box;
+    position: sticky;
+    top: 0;
+    border: 1px solid var(--green-neon);
+    z-index: 20;
+
+    /* background-color:var(--green_neon); */
+    /* color:var(--black_neon); */
+    background-color: var(--black-neon);
+    color: var(--green-neon);
+}
+#renderTable .TableColumn .Hour {
+    border: 1px solid var(--green-neon);
+
+    background-color: #dbffcf74;
+    box-sizing: border-box;
+}
+#renderTable .TableColumn .ComeHomeHour {
+    background-color: #c6ffc9;
+}
+
+#renderTable .TableColumn.IndexHour {
     min-width: 30px;
     width: min-content;
     position: sticky;
     left: 0;
     z-index: 21;
 }
-.renderTable .column.currentDayWeek {
-    --current_dayweek_color: rgb(238, 255, 0);
-    background-color: var(--current_dayweek_color);
+#renderTable .TableColumn.IndexHour .Hour {
+    background-color: var(--black-neon);
+    color: var(--green-neon);
 }
 
-.renderTable .column .columName {
-    box-sizing: border-box;
-    position: sticky;
-    top: 0;
-    border: 1px solid var(--green_neon);
-    z-index: 20;
-
-    /* background-color:var(--green_neon); */
-    /* color:var(--black_neon); */
-    background-color: var(--black_neon);
-    color: var(--green_neon);
+#renderTable .TableColumn.NowDayWeek {
+    background-color: var(--color-now-dayweek);
 }
-.renderTable .column .hourOfDay {
-    border: 1px solid var(--green_neon);
-
-    background-color: #dbffcf74;
-    box-sizing: border-box;
+#renderTable .TableColumn.NowDayWeek .TableColumnName {
+    background-color: var(--color-now-dayweek);
+    color: var(--black-neon);
 }
-.renderTable .column .notWorkHour {
+#renderTable .TableColumn.NowDayWeek .Hour {
+    background-color: var(--color-now-dayweek);
+}
+#renderTable .TableColumn.Weekend .Hour {
     background-color: #c6ffc9;
-}
-
-.renderTable .column.indexHour .hourOfDay {
-    background-color: var(--black_neon);
-    color: var(--green_neon);
-}
-.renderTable .column.weekend .hourOfDay {
-    background-color: #c6ffc9;
-}
-.renderTable .column.currentDayWeek .columName {
-    background-color: var(--current_dayweek_color);
-    color: var(--black_neon);
-}
-.renderTable .column.currentDayWeek .hourOfDay {
-    background-color: var(--current_dayweek_color);
 }
 
 /* SECTION: class rendering */
-.classRender .classContainer .classProps::-webkit-scrollbar,
-.classDetails::-webkit-scrollbar {
+.ThongTinLop::-webkit-scrollbar,
+.ThongTinLopChiTiet::-webkit-scrollbar {
     width: 3px;
     height: 3px;
 }
-.classRender .classContainer .classProps::-webkit-scrollbar-thumb,
-.classDetails::-webkit-scrollbar-thumb {
+.ThongTinLop::-webkit-scrollbar-thumb,
+.ThongTinLopChiTiet::-webkit-scrollbar-thumb {
     background-color: red;
 }
-.classRender .classContainer .classProps::-webkit-scrollbar-track,
-.classDetails::-webkit-scrollbar-track {
+.ThongTinLop::-webkit-scrollbar-track,
+.ThongTinLopChiTiet::-webkit-scrollbar-track {
     background-color: black;
 }
 
-.renderTable .column .classRender {
+#renderTable .LopDangKyElement {
     left: 0px;
     width: 100%;
     overflow: visible;
     border-radius: 3px;
-    /* border: 1px solid var(--black_neon); */
+    /* border: 1px solid var(--black-neon); */
     box-sizing: border-box;
     transition: 0.1s;
     z-index: 5;
 }
-.renderTable .column .classRender .classContainer {
+#renderTable .LopDangKyElement .LopDangKyContainer {
     height: 100%;
 }
-.renderTable .column .classRender .classContainer .classProps {
+#renderTable .LopDangKyElement .LopDangKyContainer .ThongTinLop {
     width: 100%;
     display: flex;
     flex-wrap: wrap;
@@ -419,13 +398,12 @@ body {
     cursor: default;
     font-size: 12px;
 }
-.renderTable .column .classRender .classContainer .classProps .classProp {
+#renderTable .LopDangKyElement .LopDangKyContainer .ThongTinLop .ThuocTinhLop {
     /* width: max-content; */
     /* width: 100%; */
     min-width: 50%;
 }
 
-/*=======================================================================================*/
 /* SECTION: RESPONSIVE*/
 @media screen and (orientation: portrait) {
     #pageMessagesContent {

@@ -1,6 +1,6 @@
-import { Request, Response, NextFunction } from 'express';
-import { AppConfig } from '../config/AppConfig';
-import { ResponseEntity } from '../models/ResponseEntity';
+import { Request, Response, NextFunction } from "express";
+import { AppConfig } from "../config/AppConfig";
+import { ResponseEntity } from "../models/ResponseEntity";
 
 class RequestFilter {
     adminFilter(req: Request, resp: Response, next: NextFunction) {
@@ -11,8 +11,8 @@ class RequestFilter {
                 return;
             }
         }
-        resp.setHeader('Content-Type', 'application/json; charset=utf-8');
-        resp.send(ResponseEntity.builder().code(0).message('Unauthorized').build());
+        resp.setHeader("Content-Type", "application/json; charset=utf-8");
+        resp.send(ResponseEntity.builder().code(0).message("Unauthorized").build());
     }
 }
 

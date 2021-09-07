@@ -1,54 +1,52 @@
 "use strict";
 
-const SCREEN_TAG = document.getElementById("terminal-screen");
-const PARAMS_GUIDE_TAG = document.getElementById("terminal-args-guide");
-const AUTO_COMPLETE_TAG = document.getElementById("terminal-auto-complete");
-const ENV_VARIABLES_TAG = document.getElementById("terminal-env-variables");
-const TYPING_CONTENT_TAG = document.getElementById("terminal-typing-content");
-const COMMAND_PREVIEW_TAG = document.getElementById("terminal-command-preview");
+const screenTag = document.getElementById("MessengerScreen");
+const autoCompleteTag = document.getElementById("MessageAutoComplete");
+const typingCommandTag = document.getElementById("MessageTypingContent");
+const commandPreviewTag = document.getElementById("MessagePreview");
 
-const ENV_VARIABLES = { term: "20192", file: false, secret: "iloveyou" };
-const COMMAND_PATHS = {};
+const ENVIRONMENT = { term: "20192", file: false, secret: "iloveyou" };
+const PATHS = {};
 
-class CommandPattern {
+class Command {
     bin = "";
     args = {};
     execute = console.log;
 }
 
 class Terminal {
-    add_command(command = new CommandPattern()) {
-        COMMAND_PATHS[command.bin] = command;
+    add_command(command = new Command()) {
+        PATHS[command.bin] = command;
     }
     get_command(bin = "") {
-        let pointer = COMMAND_PATHS[bin];
+        let pointer = PATHS[bin];
         return pointer;
     }
 
     set_typing_value(value = "") {
-        TYPING_CONTENT_TAG.value = value;
+        typingCommandTag.value = value;
     }
     get_typing_value() {
-        return TYPING_CONTENT_TAG.value.replace(/\s+/g, " ");
+        return typingCommandTag.value.replace(/\s+/g, " ");
     }
 
     append_command(value = "") {
         let div = document.createElement("div");
-        div.classList.add("typed", "noSelect");
-        div.innerHTML = `<span class="time">${terminalUtils.prefix_now()}</span><span class="content">${value}</span>`;
-        SCREEN_TAG.appendChild(div);
-        SCREEN_TAG.scrollTo(0, SCREEN_TAG.scrollHeight);
+        div.classList.add("Message", "user-select-none");
+        div.innerHTML = `<span class="MessageTime">${terminalUtils.prefix_now()}</span><span class="MessageContent">${value}</span>`;
+        screenTag.appendChild(div);
+        screenTag.scrollTo(0, screenTag.scrollHeight);
     }
 
     append_response(message = {}, options = { json: false }) {
         if (options.json) {
-            message = JSON.stringify(message, null, "\t");
+            message = JSON.stringify(message, null, " ");
         }
         let div = document.createElement("div");
-        div.classList.add("response");
-        div.innerHTML = `<pre class="content">${message}</pre><span class="time">${terminalUtils.prefix_now()}</span>`;
-        SCREEN_TAG.appendChild(div);
-        SCREEN_TAG.scrollTo(0, SCREEN_TAG.scrollHeight);
+        div.classList.add("ResponseMessage");
+        div.innerHTML = `<pre class="MessageContent">${message}</pre><span class="MessageTime">${terminalUtils.prefix_now()}</span>`;
+        screenTag.appendChild(div);
+        screenTag.scrollTo(0, screenTag.scrollHeight);
     }
     append_response_json(message = {}) {
         terminal.append_response(message, { json: true });
@@ -57,11 +55,11 @@ class Terminal {
     execute(command = "") {
         try {
             command = command.trim();
-            for (let bin in COMMAND_PATHS) {
+            for (let bin in PATHS) {
                 if (command.startsWith(bin)) {
                     let args = command.split(/\s+/);
-                    let command_bin = new CommandPattern();
-                    command_bin = COMMAND_PATHS[bin];
+                    let command_bin = new Command();
+                    command_bin = PATHS[bin];
                     let full_command = command_bin.execute.apply(null, args);
                     return full_command;
                 }
@@ -72,117 +70,85 @@ class Terminal {
         }
     }
 
-    show_env_variables() {
-        let innerHTML = "";
-        for (let key in ENV_VARIABLES) {
-            let value = terminal.get(key);
-            if (key == "file") value = value.name;
-            if (key == "secret") continue;
-            innerHTML += `<span class="variable"><span class="name">${key}</span><span class="value">${value}</span></span>`;
-        }
-        ENV_VARIABLES_TAG.innerHTML = innerHTML;
+    env_get_all() {
+        return ENVIRONMENT;
     }
-    get(name) {
-        return ENV_VARIABLES[name];
+    env_get(name) {
+        return ENVIRONMENT[name];
     }
-    set(name, value) {
+    env_set(name, value) {
         if (name == "file") return false;
-        ENV_VARIABLES[name] = value;
+        ENVIRONMENT[name] = value;
         return true;
     }
 
-    isSelectingAutoComplete = false;
-    selected_auto_complete_index = -1;
+    isSelecting = false;
+    selectedIndex = -1;
 
     set_command_preview(value = "") {
-        COMMAND_PREVIEW_TAG.textContent = value;
+        commandPreviewTag.textContent = value;
     }
     clear_command_preview() {
-        COMMAND_PREVIEW_TAG.textContent = "";
-    }
-
-    gen_params_guide(executeName, params = {}) {
-        PARAMS_GUIDE_TAG.style.display = null;
-        let paramsHTML = "";
-        for (let key in params) {
-            let param = params[key];
-
-            if (param.value && param.next) {
-                paramsHTML += `<span class="redText">${key}</span> = <span class="whiteText">${param.value}</span>, `;
-            } else if (param.next) {
-                paramsHTML += `<span class="redText">${key}</span> : <span class="whiteText">${param.type}</span>, `;
-            } else if (param.value) {
-                paramsHTML += `<span class="">${key}</span> = <span class="whiteText">${param.value}</span>, `;
-            } else {
-                paramsHTML += `<span class="">${key}</span> : <span class="whiteText">${param.type}</span>, `;
-            }
-        }
-        paramsHTML = paramsHTML.trim().slice(0, -1);
-
-        PARAMS_GUIDE_TAG.innerHTML = `<span class="executeName">${executeName}</span>(${paramsHTML})`;
-    }
-    clear_params_guide() {
-        PARAMS_GUIDE_TAG.innerHTML = "";
-        PARAMS_GUIDE_TAG.style.display = "none";
+        commandPreviewTag.textContent = "";
     }
 
     gen_auto_complete(command = "") {
         if (command.match(/^\s*$/)) return;
-        for (let bin in COMMAND_PATHS) {
+        for (let bin in PATHS) {
             if (bin.startsWith(command)) {
                 let div = document.createElement("div");
-                div.classList.add("entry", "dadFlexCenterVer");
-                div.innerHTML = `<span class="cursor"></span><span class="value">${bin}</span>`;
+                div.classList.add("MessageEntry", "display-flex", "align-items-center");
+                div.innerHTML = `<span class="MessageEntryContent">${bin}</span>`;
                 div.addEventListener("click", () => {
                     terminal.set_typing_value(div.textContent);
                     terminal.clear_auto_complete();
                     terminal.clear_command_preview();
                 });
-                AUTO_COMPLETE_TAG.appendChild(div);
+                autoCompleteTag.appendChild(div);
             }
         }
     }
     clear_auto_complete() {
-        AUTO_COMPLETE_TAG.innerHTML = "";
+        autoCompleteTag.innerHTML = "";
     }
 
     toggle_selecting_auto_complete() {
-        let entries = Array.from(AUTO_COMPLETE_TAG.querySelectorAll(".entry"));
+        let entries = Array.from(autoCompleteTag.querySelectorAll(".MessageEntry"));
         let maxIndex = Math.max(0, entries.length - 1);
         let minIndex = 0;
-        if (terminal.selected_auto_complete_index > maxIndex) {
-            terminal.selected_auto_complete_index = maxIndex;
-        } else if (terminal.selected_auto_complete_index < minIndex) {
-            terminal.selected_auto_complete_index = minIndex;
+        if (terminal.selectedIndex > maxIndex) {
+            terminal.selectedIndex = maxIndex;
+        } else if (terminal.selectedIndex < minIndex) {
+            terminal.selectedIndex = minIndex;
         }
 
         entries.forEach((entry, index) => {
-            if (index == terminal.selected_auto_complete_index) {
-                entry.classList.add("selected");
+            if (index == terminal.selectedIndex) {
+                entry.classList.add("isSelecting");
 
                 let childStart = entry.offsetTop;
                 let childEnd = childStart + parseFloat(getComputedStyle(entry).height);
 
-                let dadStart = AUTO_COMPLETE_TAG.scrollTop;
-                let dadEnd = dadStart + parseFloat(getComputedStyle(AUTO_COMPLETE_TAG).height);
+                let dadStart = autoCompleteTag.scrollTop;
+                let dadEnd = dadStart + parseFloat(getComputedStyle(autoCompleteTag).height);
 
                 if (childStart < dadStart) {
-                    AUTO_COMPLETE_TAG.scrollBy(0, childStart - dadStart);
+                    autoCompleteTag.scrollBy(0, childStart - dadStart);
                 } else if (childEnd > dadEnd) {
-                    AUTO_COMPLETE_TAG.scrollBy(0, childEnd - dadEnd);
+                    autoCompleteTag.scrollBy(0, childEnd - dadEnd);
                 }
 
                 terminal.set_command_preview(entry.textContent);
             } else {
-                entry.classList.remove("selected");
+                entry.classList.remove("isSelecting");
             }
         });
     }
     /**
-     * hàm này lấy giá trị đang select của auto complete và nhét vào typing value
+     * hàm này lấy giá trị đang select của auto complete và nhét vào TypingMessage value
      */
     fetch_selecting_auto_complete() {
-        let entry = AUTO_COMPLETE_TAG.querySelectorAll(".entry")[terminal.selected_auto_complete_index];
+        let entry = autoCompleteTag.querySelectorAll(".MessageEntry")[terminal.selectedIndex];
         if (entry) {
             terminal.set_typing_value(entry.textContent.trim());
         }
@@ -205,36 +171,21 @@ class TerminalUtils {
 }
 const terminalUtils = new TerminalUtils();
 
-terminal.show_env_variables();
-
-window.addEventListener("drop", (e) => {
-    e.preventDefault();
-
-    let file = e.dataTransfer.files[0];
-    ENV_VARIABLES.file = file;
-
-    terminal.append_response("drop: " + file.name);
-    terminal.show_env_variables();
-});
-window.addEventListener("dragover", (e) => e.preventDefault());
-
-TYPING_CONTENT_TAG.addEventListener("keydown", (e) => {
+typingCommandTag.addEventListener("keydown", (e) => {
     let command = terminal.get_typing_value();
 
     switch (e.key) {
         case "Enter":
             e.preventDefault();
-            if (terminal.isSelectingAutoComplete) {
+            if (terminal.isSelecting) {
                 terminal.fetch_selecting_auto_complete();
-                terminal.isSelectingAutoComplete = false;
+                terminal.isSelecting = false;
                 return;
             }
             terminal.clear_auto_complete();
             terminal.clear_command_preview();
 
-            terminal.clear_params_guide();
-
-            TYPING_CONTENT_TAG.value = "";
+            typingCommandTag.value = "";
             if (command.match(/^\s*$/)) return;
 
             let full_command = terminal.execute(command);
@@ -243,29 +194,28 @@ TYPING_CONTENT_TAG.addEventListener("keydown", (e) => {
 
         case "Tab":
             e.preventDefault();
-            terminal.isSelectingAutoComplete = false;
+            terminal.isSelecting = false;
             terminal.fetch_selecting_auto_complete();
             break;
 
         case "ArrowDown":
             e.preventDefault();
-            terminal.isSelectingAutoComplete = true;
-            terminal.selected_auto_complete_index++;
+            terminal.isSelecting = true;
+            terminal.selectedIndex++;
             setTimeout(terminal.toggle_selecting_auto_complete, 0);
             break;
 
         case "ArrowUp":
             e.preventDefault();
-            terminal.isSelectingAutoComplete = true;
-            terminal.selected_auto_complete_index--;
+            terminal.isSelecting = true;
+            terminal.selectedIndex--;
             setTimeout(terminal.toggle_selecting_auto_complete, 0);
             break;
 
         default:
-            terminal.isSelectingAutoComplete = false;
+            terminal.isSelecting = false;
             setTimeout(() => {
                 let command = terminal.get_typing_value();
-                terminal.clear_params_guide();
                 terminal.clear_auto_complete();
                 terminal.clear_command_preview();
                 terminal.gen_auto_complete(command);
@@ -273,8 +223,4 @@ TYPING_CONTENT_TAG.addEventListener("keydown", (e) => {
             }, 0);
             break;
     }
-});
-ENV_VARIABLES_TAG.addEventListener("mousedown", (e) => {
-    e.preventDefault();
-    TYPING_CONTENT_TAG.focus();
 });

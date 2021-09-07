@@ -1,0 +1,155 @@
+@import url("https://fonts.googleapis.com/css2?family=Alata&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Source+Code+Pro&display=swap");
+
+:root {
+    --gray-faded: #424242;
+    --green-neon: #73ff00;
+    --black-neon: #000800;
+    --black-neon-faded: #000a00f3;
+    --green-neon-faded: #081000;
+}
+
+
+.font-family-Alata {
+    font-family: "Alata", sans-serif;
+}
+.font-family-SourceCodePro {
+    font-family: "Source Code Pro", monospace;
+}
+
+.color-green-neon {
+    color: var(--green-neon);
+}
+.color-black-neon {
+    color: var(--black-neon);
+}
+.color-gray-faded {
+    color: var(--gray-faded);
+}
+.background-color-green-neon {
+    background-color: var(--green-neon);
+}
+.background-color-black-neon {
+    background-color: var(--black-neon);
+}
+.background-color-gray-faded {
+    background-color: var(--gray-faded);
+}
+
+.CustomTitle {
+    padding: 3px;
+    border-radius: 5px;
+    border: 1px solid black;
+    background-color: #010500;
+    color: #0dff00;
+    letter-spacing: 1px;
+    box-shadow: 0 0 5px 1px black;
+}
+.CustomNeonText {
+    color: var(--green-neon);
+    background-color: var(--black-neon);
+
+    padding: 4px 5px;
+    border-radius: 3px;
+    margin: 10px 0px;
+    display: inline-block;
+    font-size: 12px;
+}
+.CustomNeonText:hover {
+    box-shadow: 0 0 5px 1px var(--green-neon);
+    color: var(--black-neon);
+    background-color: var(--green-neon);
+}
+
+/*chỉ cần thêm class vào thẻ button là dùng được*/
+.CustomNeonButtonSlide {
+    display: inline-block;
+    position: relative;
+    overflow: display-none;
+    z-index: 1;
+
+    border: none;
+    outline: none;
+    padding: 3px 10px;
+    border-radius: 5px;
+
+    cursor: default;
+
+    color: var(--green-neon);
+    background: var(--black-neon);
+
+    transition: 0.1s;
+    transition-delay: 0.1s;
+}
+.CustomNeonButtonSlide::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: -1;
+    background-color: var(--green-neon);
+
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: 0.1s linear;
+}
+
+.CustomNeonButtonSlide:hover {
+    color: var(--black-neon);
+    box-shadow: 0 0 10px var(--green-neon), 0 0 40px var(--green-neon), 0 0 80px var(--green-neon);
+}
+.CustomNeonButtonSlide:hover::before {
+    transform: scaleX(1);
+}
+
+.CustomNeonButtonClick {
+    display: inline-block;
+    position: relative;
+    z-index: 1;
+
+    outline: none;
+    padding: 3px 10px;
+    border-radius: 5px;
+    border: 1px solid var(--green-neon);
+
+    cursor: default;
+
+    color: var(--green-neon);
+    background: var(--black-neon);
+
+    box-shadow: var(--green-neon-faded) -3px 3px, var(--green-neon-faded) -2.5px 2.5px, var(--green-neon-faded) -2px 2px,
+        var(--green-neon-faded) -1.5px 1.5px, var(--green-neon-faded) -1px 1px, var(--green-neon-faded) -0.5px 0.5px, black -3px 3px 10px;
+    left: 3px;
+    bottom: 3px;
+
+    transition: 0s;
+}
+.CustomNeonButtonClick:active {
+    box-shadow: 0 0 20px var(--green-neon);
+    left: 0;
+    bottom: 0;
+}
+
+.CustomNeonButtonClickSimple {
+    display: inline-block;
+    position: relative;
+    z-index: 1;
+
+    border: none;
+    outline: none;
+    padding: 3px 10px;
+    border-radius: 5px;
+    border: 1px solid var(--green-neon);
+
+    cursor: default;
+
+    color: var(--green-neon);
+    background: var(--black-neon);
+
+    transition: 0s;
+}
+.CustomNeonButtonClickSimple:active {
+    box-shadow: 0 0 20px var(--green-neon);
+}
