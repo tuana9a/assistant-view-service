@@ -2,11 +2,11 @@ import fs from "fs";
 
 var config = {
     server: {
-        address: "",
         port: -1
     },
     security: {
-        secret: ""
+        secret: "",
+        ssl: false
     },
     path: {
         resource_dir: "resource/",

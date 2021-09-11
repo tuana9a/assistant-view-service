@@ -1,8 +1,7 @@
 "use strict";
 
-import { randomUtils, utils } from "./common.utils.js";
-import { AppConfig } from "./app.js";
 import { httpClientService } from "./common.js";
+import { randomUtils, utils } from "./common.utils.js";
 import { registerPreviewUtils } from "./register-preview.utils.js";
 
 const NUM_OF_HOUR = 24;
@@ -19,6 +18,21 @@ const openPageMessagesTag = document.getElementById("openPageMessages");
 const closePageMessagesTag = document.getElementById("closePageMessages");
 const classesSearchResultTag = document.getElementById("LopDangKySearchResult");
 const pageMessagesContentTag = document.getElementById("pageMessagesContent");
+
+let AppConfig = {
+    apps: {
+        app2: {
+            name: "",
+            address: ""
+        },
+        app3: {
+            name: "",
+            address: ""
+        }
+    },
+    version: "v2019.7",
+    service_worker_file: "app.service-worker.js"
+};
 
 class LopDangKy {
     ma_lop = -1;
@@ -40,6 +54,29 @@ class LopDangKy {
     div;
     time = { start_h: 0, start_m: 0, stop_h: 0, stop_m: 0 };
 }
+
+class LopDangKyUtils {
+    make_key(lopDangKy = new LopDangKy()) {
+        return `${lopDangKy.ma_lop}.${lopDangKy.buoi_hoc_so}`;
+    }
+    reduce_classes(classes = [new LopDangKy()]) {
+        let _classes = new Map();
+        classes.forEach((lopDangKy = new LopDangKy()) => {
+            let key = lopDangKyUtils.make_key(lopDangKy);
+            let exit_class = _classes.get(key);
+            if (exit_class) {
+                if (lopDangKy._timestamp > exit_class._timestamp) {
+                    _classes.set(key, lopDangKy);
+                }
+            } else {
+                _classes.set(key, lopDangKy);
+            }
+        });
+        classes = Array.from(_classes.values());
+        return classes;
+    }
+}
+const lopDangKyUtils = new LopDangKyUtils();
 
 class PageMessageUtils {
     clearNotificationQueue() {
@@ -164,11 +201,17 @@ class TermPreviewUtils {
 const termPreviewUtils = new TermPreviewUtils();
 
 class LopDangKyElementsUtils {
+    addAllSeletecText(textContents = [""]) {
+        textContents.forEach((text) => lopDangKyElementsUtils.addSeletedText(text));
+    }
     addSelected(lopDangKy = new LopDangKy()) {
-        if (timeTableDataManager.exist_classes.has(`${lopDangKy.ma_lop}.${lopDangKy.buoi_hoc_so}`)) return;
-
+        if (timeTableDataManager.exist_class_keys.has(lopDangKyUtils.make_key(lopDangKy))) {
+            return;
+        }
         let textContent = `${lopDangKy.ma_lop} - ${lopDangKy.ten_hoc_phan} - ${lopDangKy.loai_lop} - buổi ${lopDangKy.buoi_hoc_so}`;
-
+        this.addSeletedText(textContent);
+    }
+    addSeletedText(textContent = "") {
         let div = document.createElement("div");
         div.classList.add("MaLop");
         div.innerHTML = `<span class="input" role="textbox" contenteditable>${textContent}</span><span class="remove user-select-none"><span>❌</span></span>`;
@@ -180,22 +223,22 @@ class LopDangKyElementsUtils {
             }
         });
         // setTimeout(registerPreview, 50); //TODO: tối ưu register preivew
-
         classesSeletedTag.appendChild(div);
     }
     clearSelected() {
         classesSeletedTag.innerHTML = "";
     }
     addSearchResult(lopDangKy = new LopDangKy()) {
-        if (timeTableDataManager.exist_classes.has(`${lopDangKy.ma_lop}.${lopDangKy.buoi_hoc_so}`)) return;
-
+        if (timeTableDataManager.exist_class_keys.has(lopDangKyUtils.make_key(lopDangKy))) {
+            return;
+        }
         let textContent = `${lopDangKy.ma_lop} - ${lopDangKy.ten_hoc_phan} - ${lopDangKy.loai_lop} - buổi ${lopDangKy.buoi_hoc_so}`;
 
         let div = document.createElement("div");
         div.classList.add("MaLop", "user-select-none");
         div.innerHTML = `<span class="MaLopContent">${textContent}</span>`;
         div.addEventListener("click", () => div.remove());
-        div.addEventListener("click", () => elementsUtils.addSelected(lopDangKy));
+        div.addEventListener("click", () => lopDangKyElementsUtils.addSelected(lopDangKy));
         div.addEventListener("click", () => setTimeout(registerPreview, 50)); //TODO tối ưu register preview
 
         classesSearchResultTag.appendChild(div);
@@ -204,7 +247,7 @@ class LopDangKyElementsUtils {
         classesSearchResultTag.innerHTML = "";
     }
 }
-const elementsUtils = new LopDangKyElementsUtils();
+const lopDangKyElementsUtils = new LopDangKyElementsUtils();
 
 /**
  * classes              mảng lữu dữ liệu class hiện tại
@@ -213,7 +256,7 @@ const elementsUtils = new LopDangKyElementsUtils();
  * dayweekHourElements  mảng lưu div.hourElement theo ngày tương ứng
  */
 class TimeTableDataManager {
-    exist_classes = new Set();
+    exist_class_keys = new Set();
     classes = [];
     dayweekClasses = [[], [], [], [], [], [], []];
     dayweekElements = [];
@@ -499,7 +542,6 @@ async function findMany(term = "", ids = [], options = { fuzzy: false }) {
             })
         };
     }
-
     let url = AppConfig.apps.app2.address + `/api/find/many/lop-dang-ky?term=${term}`;
     return httpClientService.ajax({ url: url, method: "POST", body: filter });
 }
@@ -513,13 +555,15 @@ async function findMany(term = "", ids = [], options = { fuzzy: false }) {
 async function registerPreview() {
     let termPreview = termPreviewUtils.getValue();
     let classIds = userInputUtils.extractChoosenClassesIds();
+    let seletedClassText = userInputUtils.getChoosenClassesTexts();
+    localStorage.setItem("seleted", JSON.stringify(seletedClassText));
 
     let response = await findMany(termPreview, classIds);
     if (response.code == 1) {
-        let classes = response.data;
-        localStorage.setItem("classes", JSON.stringify(classes));
-        timeTableDataManager.exist_classes = new Set(classes.map((x) => `${x.ma_lop}.${x.buoi_hoc_so}`));
+        let classes = lopDangKyUtils.reduce_classes(response.data);
+        timeTableDataManager.exist_class_keys = new Set(classes.map(lopDangKyUtils.make_key));
 
+        localStorage.setItem("classes", JSON.stringify(classes));
         //EXPLAIN: có thể query quá lâu người dùng chuyển kì sẽ bị sai
         // nên check nếu đúng thì mới update giá trị và render
         if (termPreviewUtils.getValue() == termPreview) {
@@ -528,17 +572,40 @@ async function registerPreview() {
     }
 }
 
-document.querySelectorAll(".WeekToggle").forEach((each) =>
-    each.addEventListener("mousedown", function () {
-        let delta = parseInt(each.getAttribute("data-value"));
+/**
+ * tạo một week toggle element
+ * @param {Element} element
+ */
+function _make_toggle_week(element) {
+    element.addEventListener("mousedown", function () {
+        let delta = parseInt(element.getAttribute("data-value"));
         let week_old = weekPreviewUtils.getValue();
         let week_new = week_old + delta;
         localStorage.setItem("week", week_new);
 
         weekPreviewUtils.setValue(week_new);
         timeTableRenderUtils.renderMany();
-    })
-);
+    });
+}
+
+function _execute_order_66() {
+    let schoolAutomationTag = document.getElementById("schoolAutomation");
+    schoolAutomationTag.classList.toggle("display-none");
+}
+
+function _execute_order_69() {
+    let username = document.getElementById("inputUsername").value;
+    let password = document.getElementById("inputPassword").value;
+    let classIds = userInputUtils.extractChoosenClassesIds().map((x) => String(x));
+    let begin = new Date(document.getElementById("inputBegin").value).getTime() || 0;
+    let entry = { username, password, classIds, begin, action: "dk-sis.auto_register_classes" };
+    let message = JSON.stringify(entry, null, "  ");
+    console.log(message);
+}
+
+document.querySelectorAll(".WeekToggle").forEach(_make_toggle_week);
+document.getElementById("createEntry").addEventListener("click", _execute_order_69);
+document.getElementsByTagName("h1").item(0).addEventListener("dblclick", _execute_order_66);
 
 weekPreviewTag.addEventListener("keydown", function (e) {
     if (e.key.match(/^(\d|\w|Backspace)$/)) {
@@ -569,7 +636,7 @@ inputSearchClassTag.addEventListener("keydown", function (e) {
         localStorage.setItem("input-search-class", userInputSearchClassValue);
 
         if (userInputSearchClassValue == "" || userInputSearchClassValue.length <= 4 || userInputSearchClassValue.match(/^\s+$/)) {
-            elementsUtils.clearSearchResult();
+            lopDangKyElementsUtils.clearSearchResult();
             return;
         }
 
@@ -579,8 +646,9 @@ inputSearchClassTag.addEventListener("keydown", function (e) {
             let response = await findMany(termPreview, classIds, { fuzzy: true });
 
             if (response.code == 1) {
-                elementsUtils.clearSearchResult();
-                response.data.forEach((lopDangKy) => elementsUtils.addSearchResult(lopDangKy));
+                lopDangKyElementsUtils.clearSearchResult();
+                let classes = lopDangKyUtils.reduce_classes(response.data);
+                classes.forEach((lopDangKy) => lopDangKyElementsUtils.addSearchResult(lopDangKy));
             }
         }
     }, 50);
@@ -605,33 +673,5 @@ timeTableRenderUtils.initTable(dropHours, TABLE_ROW_HEIGHT);
 inputSearchClassUtils.setValue(localStorage.getItem("input-search-class"));
 termPreviewUtils.setValue(localStorage.getItem("term") || "20192");
 weekPreviewUtils.setValue(localStorage.getItem("week") || 0);
-JSON.parse(localStorage.getItem("classes"))?.forEach((lopDangKy) => elementsUtils.addSelected(lopDangKy));
-setTimeout(registerPreview, 50); //TODO: tối ưu register preivew
-
-function execute_order(number) {
-    let schoolAutomationTag = document.getElementById("schoolAutomation");
-    let inputMssvTag = document.getElementById("inputMssv");
-    let inputPasswordTag = document.getElementById("inputPassword");
-
-    switch (number) {
-        case 66:
-            schoolAutomationTag.classList.toggle("display-none");
-            break;
-
-        case 69:
-            schoolAutomationTag.classList.add("display-none");
-
-            let username = inputMssvTag.value;
-            let password = inputPasswordTag.value;
-
-            let beginDate = document.querySelector("#inputDate").value;
-            let beginTime = document.querySelector("#inputTime").value;
-            let begin = new Date(beginDate + " " + beginTime).getTime() || 0;
-
-            let classIds = userInputUtils.extractChoosenClassesIds().map((x) => String(x));
-            let data = { username, password, classIds, begin, action: "dk-sis" };
-            data = JSON.stringify(data, null, "  ");
-            console.log(data);
-            break;
-    }
-}
+lopDangKyElementsUtils.addAllSeletecText(JSON.parse(localStorage.getItem("seleted")) || []);
+httpClientService.ajax({ url: "/app-config.json", method: "GET" }, (data) => (AppConfig = data)).then(registerPreview); //TODO tối ưu register preview

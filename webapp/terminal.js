@@ -71,13 +71,16 @@ class Terminal {
     }
 
     env_get_all() {
-        return ENVIRONMENT;
+        let result = {};
+        for (const key in ENVIRONMENT) {
+            result[key] = key == "file" ? ENVIRONMENT.file.name : ENVIRONMENT[key];
+        }
+        return result;
     }
     env_get(name) {
         return ENVIRONMENT[name];
     }
     env_set(name, value) {
-        if (name == "file") return false;
         ENVIRONMENT[name] = value;
         return true;
     }

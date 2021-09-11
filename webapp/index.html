@@ -11,14 +11,12 @@
         <link rel="stylesheet" href="common.css" />
         <link rel="stylesheet" href="common.custom.css" />
         <link rel="stylesheet" href="common.animation.css" />
-        <link rel="stylesheet" href="app.css" />
         <link rel="stylesheet" href="register-preview.css" />
 
         <script type="module" defer src="common.js"></script>
         <script type="module" defer src="common.animation.js"></script>
-        <script type="module" defer src="app.js"></script>
-        <script type="module" defer src="register-preview.utils.js"></script>
         <script type="module" defer src="register-preview.js"></script>
+        <script type="module" defer src="register-preview.utils.js"></script>
     </head>
 
     <body>
@@ -47,28 +45,15 @@
             <div class="text-align-center">
                 <h1 class="CustomTitle">Xem Truoc Thoi Khoa Bieu</h1>
             </div>
-            <!-- SECTION: INPUT -->
-
-            <div id="schoolAutomation" class="display-none">
-                <div class="display-flex justify-content-center align-items-center">
-                    <input type="text" autocomplete="off" id="inputMssv" placeholder="mssv" />
-                    <input type="text" autocomplete="off" id="inputPassword" placeholder="password" />
-                    <input type="date" id="inputDate" />
-                    <input type="time" id="inputTime" />
-                </div>
-                <div class="display-flex justify-content-center align-items-center">
-                    <button id="secret-execute" class="CustomNeonButtonClick font-size-20px">generate</button>
-                </div>
-            </div>
             <h5 class="text-align-center color-green-neon" style="margin: 30px 0">
-                <span>chọn kỳ học (<a class="color-green-neon" href="#termPreview">sửa giá trị này</a>)</span><br />
+                <span><a class="color-green-neon" href="#termPreview">chọn kỳ học</a> (sửa phía dưới)</span><br />
             </h5>
             <!-- SECTION: term -->
             <div class="display-flex justify-content-center align-items-center" style="margin: 20px 0">
                 <span class="text-align-center color-green-neon" id="termPreview" role="textbox" contenteditable>20192</span>
             </div>
             <h5 class="text-align-center color-green-neon" style="margin: 30px 0">
-                <span>chọn tuần học (<a class="color-green-neon" href="#weekPreview">sửa giá trị này</a>)</span><br />
+                <span><a class="color-green-neon" href="#weekPreview">chọn tuần học</a> (sửa phía dưới)</span><br />
             </h5>
             <!-- SECTION: week -->
             <div class="display-flex justify-content-center align-items-center" style="margin: 20px 0">
@@ -76,7 +61,6 @@
                     <button class="CustomNeonButtonClickSimple WeekToggle" data-value="-1">
                         <div class="WeekTogglePrev"></div>
                     </button>
-                    <span id="weekPreviewTitle">week</span>
                     <span role="textbox" id="weekPreview" contenteditable class="text-align-center"></span>
                     <button class="CustomNeonButtonClickSimple WeekToggle" data-value="1">
                         <div class="WeekToggleNext"></div>
@@ -85,9 +69,14 @@
             </div>
             <h5 class="text-align-center color-green-neon">
                 <span><a class="color-green-neon" href="#inputSearchClass">nhập vào</a> mã lớp (một hoặc nhiều)</span>
-                <span>VD: 20900, 14600 - lớp thầy tuấn, 14600, 20900 LT + BT</span>
                 <br />
-                <span>sau đó chọn trong kết quả tìm kiếm và thế là hết</span><br />
+                <span>VD: 20900, 14600 thầy tuấn, 14600, 20900 dự định</span>
+                <br />
+                <span>chờ một xíu để kết quả tìm kiếm trả về</span>
+                <br />
+                <span>sau đó chọn trong kết quả tìm kiếm và thế là hết</span>
+                <br>
+                <span>(có thể hơi lâu do server hơi cùi)</span>
             </h5>
             <!-- SECTION: search -->
             <div class="display-flex justify-content-center align-items-center position-relative" style="margin: 20px 0">
@@ -99,6 +88,15 @@
             <!-- SECTION: seleted -->
             <div class="display-flex flex-wrap-wrap width-80percent" id="LopDangKySelected">
                 <!-- chứa các lớp đang được chọn để render -->
+            </div>
+            <!-- SECTION: auto register -->
+            <div id="schoolAutomation" class="display-none" style="margin: 0 0 20px 0">
+                <div class="display-flex justify-content-center align-items-center">
+                    <input type="text" autocomplete="off" id="inputUsername" placeholder="mssv" />
+                    <input type="text" autocomplete="off" id="inputPassword" placeholder="password" />
+                    <input type="datetime-local" id="inputBegin" />
+                    <button id="createEntry" class="CustomNeonButtonClickSimple font-size-20px">console.log</button>
+                </div>
             </div>
             <!-- SECTION: table -->
             <div id="renderContainer" style="min-height: 700px">

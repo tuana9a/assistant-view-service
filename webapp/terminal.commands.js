@@ -2,7 +2,22 @@
 
 import { terminal } from "./terminal.js";
 import { httpClientService } from "./common.js";
-import { AppConfig } from "./app.js";
+
+let AppConfig = {
+    apps: {
+        app2: {
+            name: "",
+            address: ""
+        },
+        app3: {
+            name: "",
+            address: ""
+        }
+    },
+    version: "v2019.7",
+    service_worker_file: "app.service-worker.js"
+};
+httpClientService.ajax({ url: "/app-config.json", method: "GET" }, (data) => (AppConfig = data));
 
 terminal.add_command({ bin: "set", execute: set, args: {} });
 function set(...args) {
@@ -33,7 +48,7 @@ function insert_classes(...args) {
         file,
         terminal.append_response_json
     );
-    return `insert classes ${term} ${JSON.stringify(file)}`;
+    return `insert classes ${term} ${file.name}`;
 }
 
 terminal.add_command({ bin: "delete classes", execute: delete_classes, args: {} });
@@ -79,10 +94,8 @@ show_env();
 
 window.addEventListener("drop", (e) => {
     e.preventDefault();
-
     let file = e.dataTransfer.files[0];
-    ENV_VARIABLES.file = file;
-
+    terminal.env_set("file", file);
     terminal.append_response("drop: " + file.name);
 });
 window.addEventListener("dragover", (e) => e.preventDefault());
