@@ -5,16 +5,17 @@ import https from "https";
 import express from "express";
 
 import { AppConfig } from "./config/AppConfig";
-import { requestFilter } from "./security/RequestFilter";
 
 const server = express();
-const credentials = { key: fs.readFileSync("resource/key.pem"), cert: fs.readFileSync("resource/cert.pem") };
+const credentials = { key: fs.readFileSync(AppConfig.security.key_file), cert: fs.readFileSync(AppConfig.security.cert_file) };
 
-server.use(cors());
+if (AppConfig.security.cors) {
+    server.use(cors());
+}
 server.use(express.json());
 server.use(express.static("./webapp"));
 
-let port = process.env.PORT || AppConfig.server.port;
+let port = process.env.PORT || AppConfig.listen_port;
 if (AppConfig.security.ssl) {
     https.createServer(credentials, server).listen(port);
 } else {

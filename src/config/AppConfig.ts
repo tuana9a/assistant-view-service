@@ -1,16 +1,12 @@
 import fs from "fs";
 
 var config = {
-    server: {
-        port: -1
-    },
+    listen_port: 80,
     security: {
-        secret: "",
-        ssl: false
-    },
-    path: {
-        resource_dir: "resource/",
-        logs_dir: "logs/"
+        cors: false,
+        ssl: false,
+        cert_file: "",
+        key_file: ""
     }
 };
 config = JSON.parse(fs.readFileSync("resource/app-config.json", { flag: "r", encoding: "utf-8" }));
