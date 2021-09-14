@@ -29,9 +29,7 @@ let AppConfig = {
             name: "",
             address: ""
         }
-    },
-    version: "v2019.7",
-    service_worker_file: "app.service-worker.js"
+    }
 };
 
 class LopDangKy {
@@ -205,9 +203,11 @@ class LopDangKyElementsUtils {
         textContents.forEach((text) => lopDangKyElementsUtils.addSeletedText(text));
     }
     addSelected(lopDangKy = new LopDangKy()) {
-        if (timeTableDataManager.exist_class_keys.has(lopDangKyUtils.make_key(lopDangKy))) {
+        let key = lopDangKyUtils.make_key(lopDangKy);
+        if (dbRenderData.existSeletedClassKeys.has(key)) {
             return;
         }
+        dbRenderData.existSeletedClassKeys.add(key);
         let textContent = `${lopDangKy.ma_lop} - ${lopDangKy.ten_hoc_phan} - ${lopDangKy.loai_lop} - buổi ${lopDangKy.buoi_hoc_so}`;
         this.addSeletedText(textContent);
     }
@@ -229,10 +229,10 @@ class LopDangKyElementsUtils {
         classesSeletedTag.innerHTML = "";
     }
     addSearchResult(lopDangKy = new LopDangKy()) {
-        if (timeTableDataManager.exist_class_keys.has(lopDangKyUtils.make_key(lopDangKy))) {
+        if (dbRenderData.existSeletedClassKeys.has(lopDangKyUtils.make_key(lopDangKy))) {
             return;
         }
-        let textContent = `${lopDangKy.ma_lop} - ${lopDangKy.ten_hoc_phan} - ${lopDangKy.loai_lop} - buổi ${lopDangKy.buoi_hoc_so}`;
+        let textContent = `${lopDangKy.ma_lop} - buổi ${lopDangKy.buoi_hoc_so} - ${lopDangKy.ten_hoc_phan} - ${lopDangKy.loai_lop}`;
 
         let div = document.createElement("div");
         div.classList.add("MaLop", "user-select-none");
@@ -255,22 +255,23 @@ const lopDangKyElementsUtils = new LopDangKyElementsUtils();
  * dayweekElements      mảng lưu các div thứ trong tuần, mỗi div này chứa các element của mảng bên dưới
  * dayweekHourElements  mảng lưu div.hourElement theo ngày tương ứng
  */
-class TimeTableDataManager {
-    exist_class_keys = new Set();
+class DbRenderData {
     classes = [];
+    existRenderClassKeys = new Set();
+    existSeletedClassKeys = new Set();
     dayweekClasses = [[], [], [], [], [], [], []];
     dayweekElements = [];
     dayweekHourElements = [[], [], [], [], [], [], []];
     resetDayweekClasses() {
-        timeTableDataManager.dayweekClasses = [[], [], [], [], [], [], []];
+        dbRenderData.dayweekClasses = [[], [], [], [], [], [], []];
     }
     clearDayweekElements() {
-        for (let dayweek of timeTableDataManager.dayweekElements) {
+        for (let dayweek of dbRenderData.dayweekElements) {
             dayweek.querySelectorAll(".LopDangKyElement").forEach((each) => each.remove());
         }
     }
 }
-const timeTableDataManager = new TimeTableDataManager();
+const dbRenderData = new DbRenderData();
 
 class TimeTableUtils {
     isWeekInClassTime(class_week_string, check_week) {
@@ -300,7 +301,7 @@ class TimeTableUtils {
         return false;
     }
     getHourOfDayElement(thu, gio) {
-        return timeTableDataManager.dayweekHourElements[thu - 2][gio];
+        return dbRenderData.dayweekHourElements[thu - 2][gio];
     }
     classTimeFormat(hour = 0, minute = 0) {
         return (hour < 10 ? "0" + hour : hour) + ":" + (minute < 10 ? "0" + minute : minute);
@@ -308,7 +309,7 @@ class TimeTableUtils {
     scanOverlapTimeClasses() {
         //EXPLAIN: iterate every dayweek
         let classes = [new LopDangKy()];
-        for (classes of timeTableDataManager.dayweekClasses) {
+        for (classes of dbRenderData.dayweekClasses) {
             let overlapHandeledClasses = []; //EXPLAIN: handled class on that day, skip when meet again
 
             //EXPLAIN: iterate classes on that day
@@ -356,8 +357,8 @@ const timeTableUtils = new TimeTableUtils();
 class TimeTableCleaner {
     //EXPLAIN: giữ mảng chính, clear mảng ngày, clear html div.class
     clearOnlyClassRenders() {
-        timeTableDataManager.resetDayweekClasses();
-        timeTableDataManager.clearDayweekElements();
+        dbRenderData.resetDayweekClasses();
+        dbRenderData.clearDayweekElements();
     }
     clearAllClassDetails() {
         Array.from(document.querySelectorAll(".ThongTinLopChiTiet")).forEach((each) => each.remove());
@@ -442,10 +443,10 @@ class TimeTableRenderUtils {
         renderTableTag.appendChild(createHourIndexColumn(dropHours)); //EXPLAIN: cột chỉ số thời gian
         [2, 3, 4, 5, 6, 7, 8].forEach((dayweek) => renderTableTag.appendChild(createDayWeekColumn(dayweek, dropHours)));
 
-        timeTableDataManager.dayweekElements = Array.from(renderTableTag.querySelectorAll(".dayOfWeek"));
+        dbRenderData.dayweekElements = Array.from(renderTableTag.querySelectorAll(".dayOfWeek"));
         for (let i = 0; i < NUM_OF_DAYWEEK; i++) {
-            let dayweek = timeTableDataManager.dayweekElements[i];
-            timeTableDataManager.dayweekHourElements[i] = Array.from(dayweek.querySelectorAll(".Hour"));
+            let dayweek = dbRenderData.dayweekElements[i];
+            dbRenderData.dayweekHourElements[i] = Array.from(dayweek.querySelectorAll(".Hour"));
         }
 
         //EXPLAIN: scroll to working hour
@@ -499,17 +500,17 @@ class TimeTableRenderUtils {
         `;
         lopDangKy.div = div;
 
-        timeTableDataManager.dayweekElements[lopDangKy.thu_hoc - 2].appendChild(div);
-        timeTableDataManager.dayweekClasses[lopDangKy.thu_hoc - 2].push(lopDangKy);
+        dbRenderData.dayweekElements[lopDangKy.thu_hoc - 2].appendChild(div);
+        dbRenderData.dayweekClasses[lopDangKy.thu_hoc - 2].push(lopDangKy);
     }
     renderMany(classes = false) {
-        timeTableDataManager.classes = classes || timeTableDataManager.classes;
+        dbRenderData.classes = classes || dbRenderData.classes;
 
         pageMessageUtils.clearNotificationQueue();
         timeTableCleaner.clearOnlyClassRenders();
         timeTableCleaner.clearAllClassDetails();
 
-        timeTableDataManager.classes.forEach((lopDangKy) => timeTableRenderUtils.render(lopDangKy));
+        dbRenderData.classes.forEach((lopDangKy) => timeTableRenderUtils.render(lopDangKy));
 
         timeTableUtils.scanOverlapTimeClasses();
         pageMessageUtils.updateNumberMessages();
@@ -523,10 +524,10 @@ const timeTableRenderUtils = new TimeTableRenderUtils();
  * @param options   các options tìm kiếm
  * hàm tìm class với việc tự setup query nên khá linh động
  */
-async function findMany(term = "", ids = [], options = { fuzzy: false }) {
+async function findMany(term = "", ids = [], options = { range: false }) {
     ids = ids.map((e) => utils.fromAnyToNumber(e));
     let filter = { ma_lop: { $in: ids } };
-    if (options.fuzzy) {
+    if (options.range) {
         filter = {
             $or: ids.map(function (id) {
                 let length = String(id).length;
@@ -561,9 +562,9 @@ async function registerPreview() {
     let response = await findMany(termPreview, classIds);
     if (response.code == 1) {
         let classes = lopDangKyUtils.reduce_classes(response.data);
-        timeTableDataManager.exist_class_keys = new Set(classes.map(lopDangKyUtils.make_key));
-
         localStorage.setItem("classes", JSON.stringify(classes));
+        classes.map(lopDangKyUtils.make_key).forEach((key) => dbRenderData.existRenderClassKeys.add(key));
+
         //EXPLAIN: có thể query quá lâu người dùng chuyển kì sẽ bị sai
         // nên check nếu đúng thì mới update giá trị và render
         if (termPreviewUtils.getValue() == termPreview) {
@@ -643,7 +644,7 @@ inputSearchClassTag.addEventListener("keydown", function (e) {
         if (e.key.match(/^(\d|\w|Backspace|\s)$/)) {
             let termPreview = termPreviewUtils.getValue();
             let classIds = registerPreviewUtils.extractClassIdsFromString(userInputSearchClassValue);
-            let response = await findMany(termPreview, classIds, { fuzzy: true });
+            let response = await findMany(termPreview, classIds, { range: true });
 
             if (response.code == 1) {
                 lopDangKyElementsUtils.clearSearchResult();

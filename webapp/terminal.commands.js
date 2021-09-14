@@ -13,29 +13,25 @@ let AppConfig = {
             name: "",
             address: ""
         }
-    },
-    version: "v2019.7",
-    service_worker_file: "app.service-worker.js"
+    }
 };
-httpClientService.ajax({ url: "/app-config.json", method: "GET" }, (data) => (AppConfig = data));
 
 terminal.add_command({ bin: "set", execute: set, args: {} });
-function set(...args) {
+function set(args) {
     let key = args[1];
     let value = args[2];
-    let sucess = terminal.env_set(key, value);
-    return `set ${key}=${value} sucess:${sucess}`;
+    terminal.env_set(key, value);
 }
 
 terminal.add_command({ bin: "get", execute: get, args: {} });
-function get(...args) {
+function get(args) {
     let key = args[1];
     terminal.append_response(terminal.env_get(key));
-    return "";
 }
 
 terminal.add_command({ bin: "insert classes", execute: insert_classes, args: {} });
-function insert_classes(...args) {
+terminal.add_command({ bin: "upload classes", execute: insert_classes, args: {} });
+function insert_classes(args) {
     let term = args[2] || terminal.env_get("term");
     let file = terminal.env_get("file");
     httpClientService.uploadFile(
@@ -48,11 +44,10 @@ function insert_classes(...args) {
         file,
         terminal.append_response_json
     );
-    return `insert classes ${term} ${file.name}`;
 }
 
 terminal.add_command({ bin: "delete classes", execute: delete_classes, args: {} });
-function delete_classes(...args) {
+function delete_classes(args) {
     let term = args[2] || terminal.env_get("term");
     httpClientService.ajax(
         {
@@ -64,11 +59,10 @@ function delete_classes(...args) {
         },
         terminal.append_response_json
     );
-    return `delete classes ${term}`;
 }
 
 terminal.add_command({ bin: "upload todos.json", execute: upload_todos_json, args: {} });
-function upload_todos_json(...args) {
+function upload_todos_json(args) {
     let file = terminal.env_get("file");
     httpClientService.uploadFile(
         {
@@ -80,17 +74,29 @@ function upload_todos_json(...args) {
         file,
         terminal.append_response_json
     );
-    return `upload todos.json file=${file.name}`;
 }
 
-terminal.add_command({ bin: "show env", execute: show_env, args: {} });
-function show_env(...args) {
+terminal.add_command({ bin: "env", execute: show_env, args: {} });
+terminal.add_command({ bin: "environment", execute: show_env, args: {} });
+function show_env(args) {
     terminal.append_response_json(terminal.env_get_all());
-    return `show env`;
+}
+
+terminal.add_command({ bin: "AppConfig", execute: get_config_json, args: {} });
+terminal.add_command({ bin: "app-config.json", execute: get_config_json, args: {} });
+function get_config_json(args) {
+    terminal.append_response_json(AppConfig);
+}
+
+terminal.add_command({ bin: "paths", execute: get_paths, args: {} });
+function get_paths(args) {
+    terminal.append_response_json(terminal.get_paths());
 }
 
 terminal.env_set("term", localStorage.getItem("term"));
-show_env();
+terminal.execute("env");
+
+httpClientService.ajax({ url: "/app-config.json", method: "GET" }, (data) => (AppConfig = data));
 
 window.addEventListener("drop", (e) => {
     e.preventDefault();

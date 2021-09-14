@@ -27,12 +27,12 @@ class Terminal {
         typingCommandTag.value = value;
     }
     get_typing_value() {
-        return typingCommandTag.value.replace(/\s+/g, " ");
+        return typingCommandTag.value.trim().replace(/\s+/g, " ");
     }
 
     append_command(value = "") {
         let div = document.createElement("div");
-        div.classList.add("Message", "user-select-none");
+        div.classList.add("CommandMessage", "user-select-none");
         div.innerHTML = `<span class="MessageTime">${terminalUtils.prefix_now()}</span><span class="MessageContent">${value}</span>`;
         screenTag.appendChild(div);
         screenTag.scrollTo(0, screenTag.scrollHeight);
@@ -40,7 +40,7 @@ class Terminal {
 
     append_response(message = {}, options = { json: false }) {
         if (options.json) {
-            message = JSON.stringify(message, null, " ");
+            message = JSON.stringify(message, null, "  ");
         }
         let div = document.createElement("div");
         div.classList.add("ResponseMessage");
@@ -53,21 +53,29 @@ class Terminal {
     }
 
     execute(command = "") {
-        try {
-            command = command.trim();
-            for (let bin in PATHS) {
-                if (command.startsWith(bin)) {
-                    let args = command.split(/\s+/);
-                    let command_bin = new Command();
-                    command_bin = PATHS[bin];
-                    let full_command = command_bin.execute.apply(null, args);
-                    return full_command;
-                }
+        terminal.append_command(command);
+        let match_command_count = 0;
+        let match_bin = "";
+        for (let bin in PATHS) {
+            if (command.startsWith(bin)) {
+                match_bin = bin;
+                match_command_count++;
             }
-        } catch (e) {
-            console.error(e);
-            return `Can't execute: ${command}`;
         }
+        if (match_command_count == 0) {
+            terminal.append_response("Not Found: " + command);
+            return;
+        }
+        if (match_command_count > 1) {
+            terminal.append_response("Match Too Much: " + command + " (" + match_command_count + ")");
+            return;
+        }
+        let args = command.split(/\s+/);
+        PATHS[match_bin].execute(args);
+    }
+
+    get_paths() {
+        return PATHS;
     }
 
     env_get_all() {
@@ -191,8 +199,7 @@ typingCommandTag.addEventListener("keydown", (e) => {
             typingCommandTag.value = "";
             if (command.match(/^\s*$/)) return;
 
-            let full_command = terminal.execute(command);
-            terminal.append_command(full_command);
+            terminal.execute(command);
             break;
 
         case "Tab":

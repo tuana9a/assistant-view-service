@@ -11,7 +11,6 @@ body {
     /* box-shadow: 0 0 10px 1px black; */
     overflow: visible;
     background-color: #000000;
-    border-radius: 5px;
     height: fit-content;
     min-width: 500px;
     max-width: 1000px;
@@ -53,15 +52,11 @@ body {
     height: fit-content;
 }
 
-.CustomMessengerV1 .MessengerScreen .Message {
+.CustomMessengerV1 .MessengerScreen .CommandMessage {
     color: white;
     margin: 3px;
-}
-.CustomMessengerV1 .MessengerScreen .MessageContent {
-    background-color: #2e2e2e;
-    margin: 3px;
-    padding: 3px;
-    cursor: pointer;
+    display: flex;
+    justify-content: flex-start;
 }
 .CustomMessengerV1 .MessengerScreen .ResponseMessage {
     color: white;
@@ -69,12 +64,17 @@ body {
     display: flex;
     justify-content: flex-end;
 }
+
+.CustomMessengerV1 .MessengerScreen .MessageContent {
+    background-color: #2e2e2e;
+    margin: 3px;
+    padding: 2px 5px;
+    cursor: pointer;
+}
 .CustomMessengerV1 .MessengerScreen .ResponseMessage .MessageContent {
     /* background-color: #2a63ff; */
     /* background-color: #4A4A4A; */
     background-color: #1d3c78;
-    max-height: 500px;
-    overflow: auto;
     font-size: 16px;
 }
 

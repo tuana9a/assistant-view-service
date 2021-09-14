@@ -6,8 +6,6 @@
 
         <title>index.html</title>
 
-        <link rel="manifest" href="manifest.json" />
-
         <link rel="stylesheet" href="common.css" />
         <link rel="stylesheet" href="common.custom.css" />
         <link rel="stylesheet" href="common.animation.css" />
@@ -70,17 +68,17 @@
             <h5 class="text-align-center color-green-neon">
                 <span><a class="color-green-neon" href="#inputSearchClass">nhập vào</a> mã lớp (một hoặc nhiều)</span>
                 <br />
-                <span>VD: 20900, 14600 thầy tuấn, 14600, 20900 dự định</span>
+                <span>VD: 20900, 14600 thầy tuấn, 14600, 20900 học ké</span>
                 <br />
                 <span>chờ một xíu để kết quả tìm kiếm trả về</span>
                 <br />
                 <span>sau đó chọn trong kết quả tìm kiếm và thế là hết</span>
-                <br>
+                <br />
                 <span>(có thể hơi lâu do server hơi cùi)</span>
             </h5>
             <!-- SECTION: search -->
             <div class="display-flex justify-content-center align-items-center position-relative" style="margin: 20px 0">
-                <input class="width-60percent color-green-neon" type="text" autocomplete="off" id="inputSearchClass" placeholder="ma lop" />
+                <input class="width-60percent color-green-neon" type="text" autocomplete="off" id="inputSearchClass" placeholder="search" />
                 <div class="position-absolute display-flex flex-wrap-wrap width-60percent" id="LopDangKySearchResult">
                     <!-- chứa kết quả tìm kiếm lớp -->
                 </div>
@@ -101,7 +99,7 @@
             <!-- SECTION: table -->
             <div id="renderContainer" style="min-height: 700px">
                 <div class="position-relative display-flex text-align-center" id="renderTable">
-                    <!-- CAUTION: GENERATE TABLE -->
+                    <!-- GENERATE TABLE -->
                 </div>
             </div>
 
