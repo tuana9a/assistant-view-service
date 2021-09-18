@@ -52,6 +52,20 @@ class LopDangKy {
     time = { start_h: 0, start_m: 0, stop_h: 0, stop_m: 0 };
 }
 
+class DbRenderData {
+    classes = []; // mảng lữu dữ liệu class hiện tại
+    dayweekClasses = [[], [], [], [], [], [], []]; // mảng lưu class theo ngày, tiện cho render, check trùng thời gian
+    dayweekElements = []; // mảng lưu các div thứ trong tuần, mỗi div này chứa các element của mảng bên dưới
+    dayweekHourElements = [[], [], [], [], [], [], []]; // mảng lưu div.hourElement theo ngày tương ứng
+    resetDayweekClasses() {
+        dbRenderData.dayweekClasses = [[], [], [], [], [], [], []];
+    }
+    clearDayweekElements() {
+        renderTableTag.querySelectorAll(".LopDangKyElement").forEach((each) => each.remove());
+    }
+}
+const dbRenderData = new DbRenderData();
+
 class LopDangKyUtils {
     reduceClasses(classes = [new LopDangKy()], option = { buoi_hoc_so: false }) {
         let _classes = new Map();
@@ -151,28 +165,15 @@ class PageMessageUtils {
 }
 const pageMessageUtils = new PageMessageUtils();
 
-class InputSearchClassUtils {
+class TermPreviewUtils {
+    setValue(value = "20192") {
+        termPreviewTag.textContent = value;
+    }
     getValue() {
-        return inputSearchClassTag.value;
-    }
-    setValue(value = "") {
-        inputSearchClassTag.value = value;
-    }
-    clearValue() {
-        inputSearchClassTag.value = "";
+        return termPreviewTag.textContent || "20192";
     }
 }
-const inputSearchClassUtils = new InputSearchClassUtils();
-
-class ChoosenClassesUtils {
-    extractNumbers() {
-        return Array.from(seletedClassesTag.querySelectorAll(".input")).map((e) => utils.fromAnyToNumber(e.textContent.trim()));
-    }
-    extractTexts() {
-        return Array.from(seletedClassesTag.querySelectorAll(".input")).map((e) => e.textContent.trim());
-    }
-}
-const choosenClassesUtils = new ChoosenClassesUtils();
+const termPreviewUtils = new TermPreviewUtils();
 
 class WeekPreviewUtils {
     setValue(value = "0") {
@@ -185,80 +186,28 @@ class WeekPreviewUtils {
 }
 const weekPreviewUtils = new WeekPreviewUtils();
 
-class TermPreviewUtils {
-    setValue(value = "20192") {
-        termPreviewTag.textContent = value;
+class ChoosenClassesUtils {
+    extractNumbers() {
+        return Array.from(seletedClassesTag.querySelectorAll(".input")).map((e) => utils.fromAnyToNumber(e.textContent.trim()));
     }
+    extractTexts() {
+        return Array.from(seletedClassesTag.querySelectorAll(".input")).map((e) => e.textContent.trim());
+    }
+}
+const choosenClassesUtils = new ChoosenClassesUtils();
+
+class InputSearchClassUtils {
     getValue() {
-        return termPreviewTag.textContent || "20192";
+        return inputSearchClassTag.value;
+    }
+    setValue(value = "") {
+        inputSearchClassTag.value = value;
+    }
+    clearValue() {
+        inputSearchClassTag.value = "";
     }
 }
-const termPreviewUtils = new TermPreviewUtils();
-
-class LopDangKyElementsUtils {
-    addSeletedFromBackup(textContents = [""]) {
-        textContents.forEach((text) => lopDangKyElementsUtils.addSeletedText(text));
-        setTimeout(() => choosenClassesUtils.extractNumbers().forEach((ma_lop) => dbRenderData.existSeletedClassKeys.add(ma_lop)), 50);
-    }
-    addSelected(lopDangKy = new LopDangKy()) {
-        if (dbRenderData.existSeletedClassKeys.has(lopDangKy.ma_lop)) {
-            return;
-        }
-        dbRenderData.existSeletedClassKeys.add(lopDangKy.ma_lop);
-        let textContent = `${lopDangKy.ma_lop} - ${lopDangKy.ten_hoc_phan} - ${lopDangKy.loai_lop}`;
-        this.addSeletedText(textContent);
-    }
-    addSeletedText(textContent = "") {
-        let div = document.createElement("div");
-        div.classList.add("MaLop");
-        div.innerHTML = `<span class="input" role="textbox" contenteditable>${textContent}</span><span class="remove user-select-none"><span>❌</span></span>`;
-        div.querySelector(".remove").addEventListener("click", () => div.remove());
-        div.querySelector(".remove").addEventListener("click", () => setTimeout(registerPreview, 50)); //TODO: tối ưu register preivew
-        div.querySelector(".input").addEventListener("keydown", (e) => {
-            if (e.key.match(/^(\d|\w|Backspace)$/)) {
-                setTimeout(registerPreview, 50);
-            }
-        });
-        // setTimeout(registerPreview, 50); //TODO: tối ưu register preivew
-        seletedClassesTag.appendChild(div);
-    }
-    clearSelected() {
-        seletedClassesTag.innerHTML = "";
-    }
-    addSearchResult(lopDangKy = new LopDangKy()) {
-        if (dbRenderData.existSeletedClassKeys.has(lopDangKy.ma_lop)) return;
-
-        let textContent = `${lopDangKy.ma_lop} - ${lopDangKy.ten_hoc_phan} - ${lopDangKy.loai_lop}`;
-
-        let div = document.createElement("div");
-        div.classList.add("MaLop", "user-select-none");
-        div.innerHTML = `<span class="MaLopContent">${textContent}</span>`;
-        div.addEventListener("click", () => div.remove());
-        div.addEventListener("click", () => lopDangKyElementsUtils.addSelected(lopDangKy));
-        div.addEventListener("click", () => setTimeout(registerPreview, 50)); //TODO tối ưu register preview
-
-        searchResultTag.appendChild(div);
-    }
-    clearSearchResult() {
-        searchResultTag.innerHTML = "";
-    }
-}
-const lopDangKyElementsUtils = new LopDangKyElementsUtils();
-
-class DbRenderData {
-    classes = []; // mảng lữu dữ liệu class hiện tại
-    dayweekClasses = [[], [], [], [], [], [], []]; // mảng lưu class theo ngày, tiện cho render, check trùng thời gian
-    dayweekElements = []; // mảng lưu các div thứ trong tuần, mỗi div này chứa các element của mảng bên dưới
-    dayweekHourElements = [[], [], [], [], [], [], []]; // mảng lưu div.hourElement theo ngày tương ứng
-    existSeletedClassKeys = new Set();
-    resetDayweekClasses() {
-        dbRenderData.dayweekClasses = [[], [], [], [], [], [], []];
-    }
-    clearDayweekElements() {
-        renderTableTag.querySelectorAll(".LopDangKyElement").forEach((each) => each.remove());
-    }
-}
-const dbRenderData = new DbRenderData();
+const inputSearchClassUtils = new InputSearchClassUtils();
 
 class TimeTableUtils {
     isWeekInClassTime(class_week_string, check_week) {
@@ -351,93 +300,6 @@ class TimeTableCleaner {
 const timeTableCleaner = new TimeTableCleaner();
 
 class TimeTableRenderUtils {
-    initTable(dropHours = new Set(), TABLE_ROW_HEIGHT = 23) {
-        renderTableTag.innerHTML = ``;
-
-        function createHourIndexColumn(dropHours = new Set()) {
-            let column = document.createElement("div");
-            column.classList.add("TableColumn", "IndexHour");
-
-            column.innerHTML = `<div class="TableColumnName" style="height:${TABLE_ROW_HEIGHT + "px"}"><span></span></div>`;
-            for (let i = 0; i < NUM_OF_HOUR; i++) {
-                let hourElement = document.createElement("div");
-                hourElement.classList.add("Hour", `_${i}h`, "display-flex", "justify-content-center", "align-items-center");
-                hourElement.style.height = TABLE_ROW_HEIGHT + "px";
-                hourElement.innerHTML = `<span>${i}</span>`;
-                if (dropHours.has(i)) hourElement.style.display = "none";
-                column.appendChild(hourElement);
-            }
-
-            return column;
-        }
-        function createDayWeekColumn(dayweek, dropHours = new Set()) {
-            let column = document.createElement("div");
-            let dayName = "";
-            column.classList.add("TableColumn", "position-relative", "DayOfWeek", `_${dayweek}`);
-
-            switch (dayweek) {
-                case 2:
-                    column.classList.add("mon");
-                    dayName = "Mon";
-                    break;
-                case 3:
-                    column.classList.add("tue");
-                    dayName = "Tue";
-                    break;
-                case 4:
-                    column.classList.add("wed");
-                    dayName = "Wed";
-                    break;
-                case 5:
-                    column.classList.add("thu");
-                    dayName = "Thu";
-                    break;
-                case 6:
-                    column.classList.add("fri");
-                    dayName = "Fri";
-                    break;
-                case 7:
-                    column.classList.add("sat", "Weekend");
-                    dayName = "Sat";
-                    break;
-                case 8:
-                    column.classList.add("sun", "Weekend");
-                    dayName = "Sun";
-                    break;
-            }
-            let columnContent = document.createElement("div");
-            columnContent.classList.add("TableColumnName", "display-flex", "justify-content-center", "align-items-center");
-            columnContent.style.height = TABLE_ROW_HEIGHT + "px";
-            columnContent.innerHTML = `<span>${dayName}</span>`;
-            column.appendChild(columnContent);
-
-            for (let i = 0; i < NUM_OF_HOUR; i++) {
-                let hourElement = document.createElement("div");
-                hourElement.classList.add("Hour", `_${i}h`);
-                if ([0, 1, 2, 3, 4, 5, 20, 21, 22, 23].indexOf(i) != -1) {
-                    hourElement.classList.add("ComeHomeHour");
-                }
-                hourElement.style.height = TABLE_ROW_HEIGHT + "px";
-                if (dropHours.has(i)) hourElement.style.display = "none";
-                column.appendChild(hourElement);
-            }
-            return column;
-        }
-
-        renderTableTag.appendChild(createHourIndexColumn(dropHours)); //EXPLAIN: cột chỉ số thời gian
-        [2, 3, 4, 5, 6, 7, 8].forEach((dayweek) => renderTableTag.appendChild(createDayWeekColumn(dayweek, dropHours)));
-
-        dbRenderData.dayweekElements = Array.from(renderTableTag.querySelectorAll(".DayOfWeek"));
-        for (let i = 0; i < NUM_OF_DAYWEEK; i++) {
-            let dayweek = dbRenderData.dayweekElements[i];
-            dbRenderData.dayweekHourElements[i] = Array.from(dayweek.querySelectorAll(".Hour"));
-        }
-
-        //EXPLAIN: scroll to working hour
-        // let renderContainer = RENDER_TABLE_TAG.parentElement;
-        // renderContainer.style.height = 14 * TABLE_ROW_HEIGHT + 'px';
-        // renderContainer.scrollTo(0, 6 * TABLE_ROW_HEIGHT);
-    }
     render(lopDangKy = new LopDangKy()) {
         let tuanHoc = lopDangKy.tuan_hoc;
         if (!tuanHoc) {
@@ -466,6 +328,9 @@ class TimeTableRenderUtils {
         let _timeStop = timeTableUtils.classTimeFormat(time.stop_h, time.stop_m);
 
         let div = document.createElement("div");
+        dbRenderData.dayweekClasses[lopDangKy.thu_hoc - 2].push(lopDangKy);
+        dbRenderData.dayweekElements[lopDangKy.thu_hoc - 2].appendChild(div);
+
         div.classList.add("LopDangKyElement", "position-absolute");
         div.style.top = `${top}px`;
         div.style.height = `${height}px`;
@@ -482,9 +347,6 @@ class TimeTableRenderUtils {
                 </div>
             </div>
         `;
-
-        dbRenderData.dayweekElements[lopDangKy.thu_hoc - 2].appendChild(div);
-        dbRenderData.dayweekClasses[lopDangKy.thu_hoc - 2].push(lopDangKy);
     }
     renderMany(classes = false) {
         dbRenderData.classes = classes || dbRenderData.classes;
@@ -498,8 +360,134 @@ class TimeTableRenderUtils {
         timeTableUtils.scanOverlapTimeClasses();
         pageMessageUtils.updateNumberMessages();
     }
+
+    addSelected(lopDangKy = new LopDangKy()) {
+        let textContent = `${lopDangKy.ma_lop} - ${lopDangKy.ten_hoc_phan} - ${lopDangKy.loai_lop}`;
+        let div = document.createElement("div");
+        div.classList.add("MaLop");
+        div.innerHTML = `<span class="input" role="textbox" contenteditable>${textContent}</span><span class="remove user-select-none"><span>❌</span></span>`;
+        div.querySelector(".remove").addEventListener("click", () => {
+            div.remove();
+            setTimeout(register_preview, 50);
+        });
+        div.querySelector(".input").addEventListener("keydown", (e) => {
+            if (e.key.match(/^(\d|\w|Backspace)$/)) {
+                setTimeout(register_preview, 50);
+            }
+        });
+        seletedClassesTag.appendChild(div);
+    }
+    clearSelected() {
+        seletedClassesTag.innerHTML = "";
+    }
+
+    addSearchResult(lopDangKy = new LopDangKy()) {
+        let textContent = `${lopDangKy.ma_lop} - ${lopDangKy.ten_hoc_phan} - ${lopDangKy.loai_lop}`;
+
+        let div = document.createElement("div");
+        div.classList.add("MaLop", "user-select-none");
+        div.innerHTML = `<span class="MaLopContent">${textContent}</span>`;
+        div.addEventListener("click", () => {
+            setTimeout(() => div.remove(), 50);
+            timeTableRenderUtils.addSelected(lopDangKy);
+            setTimeout(register_preview, 50);
+        });
+        searchResultTag.appendChild(div);
+    }
+    clearSearchResult() {
+        searchResultTag.innerHTML = "";
+    }
 }
 const timeTableRenderUtils = new TimeTableRenderUtils();
+
+/**
+ * gen table bằng code
+ * @param {Set} dropHours những giờ sẽ bị bỏ khỏi table
+ * @param {Number} _TABLE_ROW_HEIGHT độ cao mỗi dòng của table
+ */
+function init_table(dropHours = new Set(), _TABLE_ROW_HEIGHT = TABLE_ROW_HEIGHT) {
+    renderTableTag.innerHTML = ``;
+
+    function createHourIndexColumn(dropHours = new Set()) {
+        let column = document.createElement("div");
+        column.classList.add("TableColumn", "IndexHour");
+
+        column.innerHTML = `<div class="TableColumnName" style="height:${_TABLE_ROW_HEIGHT + "px"}"><span></span></div>`;
+        for (let i = 0; i < NUM_OF_HOUR; i++) {
+            let hourElement = document.createElement("div");
+            hourElement.classList.add("Hour", `_${i}h`, "display-flex", "justify-content-center", "align-items-center");
+            hourElement.style.height = _TABLE_ROW_HEIGHT + "px";
+            hourElement.innerHTML = `<span>${i}</span>`;
+            if (dropHours.has(i)) hourElement.style.display = "none";
+            column.appendChild(hourElement);
+        }
+
+        return column;
+    }
+    function createDayWeekColumn(dayweek, dropHours = new Set()) {
+        let column = document.createElement("div");
+        let dayName = "";
+        column.classList.add("TableColumn", "position-relative", "DayOfWeek", `_${dayweek}`);
+
+        switch (dayweek) {
+            case 2:
+                column.classList.add("mon");
+                dayName = "Mon";
+                break;
+            case 3:
+                column.classList.add("tue");
+                dayName = "Tue";
+                break;
+            case 4:
+                column.classList.add("wed");
+                dayName = "Wed";
+                break;
+            case 5:
+                column.classList.add("thu");
+                dayName = "Thu";
+                break;
+            case 6:
+                column.classList.add("fri");
+                dayName = "Fri";
+                break;
+            case 7:
+                column.classList.add("sat", "Weekend");
+                dayName = "Sat";
+                break;
+            case 8:
+                column.classList.add("sun", "Weekend");
+                dayName = "Sun";
+                break;
+        }
+        let columnContent = document.createElement("div");
+        columnContent.classList.add("TableColumnName", "display-flex", "justify-content-center", "align-items-center");
+        columnContent.style.height = _TABLE_ROW_HEIGHT + "px";
+        columnContent.innerHTML = `<span>${dayName}</span>`;
+        column.appendChild(columnContent);
+
+        for (let i = 0; i < NUM_OF_HOUR; i++) {
+            let hourElement = document.createElement("div");
+            hourElement.classList.add("Hour", `_${i}h`);
+            if ([0, 1, 2, 3, 4, 5, 20, 21, 22, 23].indexOf(i) != -1) {
+                hourElement.classList.add("ComeHomeHour");
+            }
+            hourElement.style.height = _TABLE_ROW_HEIGHT + "px";
+            if (dropHours.has(i)) hourElement.style.display = "none";
+            column.appendChild(hourElement);
+        }
+        return column;
+    }
+
+    renderTableTag.appendChild(createHourIndexColumn(dropHours)); //EXPLAIN: cột chỉ số thời gian
+    let dayweeks = [2, 3, 4, 5, 6, 7, 8];
+    dayweeks.forEach((dayweek) => renderTableTag.appendChild(createDayWeekColumn(dayweek, dropHours)));
+
+    dbRenderData.dayweekElements = Array.from(renderTableTag.querySelectorAll(".DayOfWeek"));
+    for (let i = 0; i < NUM_OF_DAYWEEK; i++) {
+        let dayweek = dbRenderData.dayweekElements[i];
+        dbRenderData.dayweekHourElements[i] = Array.from(dayweek.querySelectorAll(".Hour"));
+    }
+}
 
 /**
  * @param term      kỳ học muốn tìm kiếm
@@ -507,7 +495,7 @@ const timeTableRenderUtils = new TimeTableRenderUtils();
  * @param options   các options tìm kiếm
  * hàm tìm class với việc tự setup query nên khá linh động
  */
-async function findMany(term = "", ids = [], options = { range: false }) {
+async function find_many(term = "", ids = [], options = { range: false }) {
     ids = ids.map((e) => utils.fromAnyToNumber(e));
     let filter = { ma_lop: { $in: ids } };
     if (options.range) {
@@ -536,16 +524,15 @@ async function findMany(term = "", ids = [], options = { range: false }) {
  * các biến hiện tại để check việc người dùng thay đổi tham số trước khi result
  * trả về (sẽ dẫn tới sai lệch thông tin các tham số)
  */
-async function registerPreview() {
+async function register_preview() {
     let termPreview = termPreviewUtils.getValue();
     let classIds = choosenClassesUtils.extractNumbers();
-    let seletedClassText = choosenClassesUtils.extractTexts();
-    localStorage.setItem("seleted", JSON.stringify(seletedClassText));
 
-    let response = await findMany(termPreview, classIds);
+    let response = await find_many(termPreview, classIds);
     if (response.code == 1) {
         let classes = lopDangKyUtils.reduceClasses(response.data);
         localStorage.setItem("classes", JSON.stringify(classes));
+        localStorage.setItem("seleted", JSON.stringify(classes));
 
         //EXPLAIN: có thể query quá lâu người dùng chuyển kì sẽ bị sai
         // nên check nếu đúng thì mới update giá trị và render
@@ -590,6 +577,11 @@ document.querySelectorAll(".WeekToggle").forEach(_make_toggle_week);
 document.getElementById("createEntry").addEventListener("click", _execute_order_69);
 document.getElementsByTagName("h1").item(0).addEventListener("dblclick", _execute_order_66);
 
+document.body.addEventListener("mousedown", (e) => {
+    if (searchResultTag.contains(e.target)) return;
+    timeTableRenderUtils.clearSearchResult();
+});
+
 weekPreviewTag.addEventListener("keydown", function (e) {
     if (e.key.match(/^(\d|\w|Backspace)$/)) {
         setTimeout(() => {
@@ -607,7 +599,7 @@ termPreviewTag.addEventListener("keydown", function (e) {
             let value = termPreviewTag.textContent;
             localStorage.setItem("term", value);
             termPreviewUtils.setValue(value);
-            registerPreview();
+            register_preview();
         }, 50);
     }
 });
@@ -619,19 +611,19 @@ inputSearchClassTag.addEventListener("keydown", function (e) {
         localStorage.setItem("input-search-class", userInputSearchClassValue);
 
         if (userInputSearchClassValue == "" || userInputSearchClassValue.length <= 4 || userInputSearchClassValue.match(/^\s+$/)) {
-            lopDangKyElementsUtils.clearSearchResult();
+            timeTableRenderUtils.clearSearchResult();
             return;
         }
 
         if (e.key.match(/^(\d|\w|Backspace|\s)$/)) {
             let termPreview = termPreviewUtils.getValue();
             let classIds = registerPreviewUtils.extractClassIdsFromString(userInputSearchClassValue);
-            let response = await findMany(termPreview, classIds, { range: true });
+            let response = await find_many(termPreview, classIds, { range: true });
 
             if (response.code == 1) {
-                lopDangKyElementsUtils.clearSearchResult();
+                timeTableRenderUtils.clearSearchResult();
                 let classes = lopDangKyUtils.reduceClasses(response.data, { buoi_hoc_so: true });
-                classes.forEach((lopDangKy) => lopDangKyElementsUtils.addSearchResult(lopDangKy));
+                classes.forEach((lopDangKy) => timeTableRenderUtils.addSearchResult(lopDangKy));
             }
         }
     }, 50);
@@ -650,11 +642,9 @@ closePageMessagesTag.addEventListener("click", function () {
     closePageMessagesTag.classList.add("display-none");
 });
 
-let dropHours = new Set([]);
-timeTableRenderUtils.initTable(dropHours, TABLE_ROW_HEIGHT);
-
+init_table();
 inputSearchClassUtils.setValue(localStorage.getItem("input-search-class"));
 termPreviewUtils.setValue(localStorage.getItem("term") || "20192");
 weekPreviewUtils.setValue(localStorage.getItem("week") || 0);
-lopDangKyElementsUtils.addSeletedFromBackup(JSON.parse(localStorage.getItem("seleted")) || []);
-httpClientService.ajax({ url: "/app-config.json", method: "GET" }, (data) => (AppConfig = data)).then(registerPreview); //TODO tối ưu register preview
+JSON.parse(localStorage.getItem("seleted"))?.forEach(timeTableRenderUtils.addSelected);
+httpClientService.ajax({ url: "/app-config.json", method: "GET" }, (data) => (AppConfig = data)).then(register_preview);

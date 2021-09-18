@@ -7,21 +7,23 @@ webservice làm frontpage, adminpage cho tất cả app, webservice hỗ trợ b
 - <a href="https://github.com/tuana9a/app3.assistant">app3.assistant</a> (tự động đăng kí học tập)
 - <a href="https://github.com/tuana9a/app4.assistant">app4.assistant</a> (HUST's captcha to text)
 - ... 
-các bạn có thể <a href="https://github.com/tuana9a/tuana9a">liên hệ mình</a> để lấy config hoặc cần hỗ trợ
+các bạn có thể <a href="https://github.com/tuana9a/tuana9a">liên hệ mình</a> khi cần hỗ trợ
+mọi thông tin có thể public mình để ở <a href="https://drive.google.com/drive/folders/1Y9TYwdA-t1vudhznTaONIL5r_UYBvYPO?usp=sharing">thư mục drive</a>
 </pre>
 
 # #structure
 
 <pre>
 khi build src typecript toàn bộ nằm trong thư mục dist
+webapp/ là frontend cho project
 
 -- ./
    |-- dist/
    |-- resource/
    |       |-- app-config.json
    |-- src/
-   |-- webapp/ (chứa frontend cho cả project)
-           |-- app-config.json (chưa config các serive mà admin page sẽ sử dụng)
+   |-- webapp/
+           |-- app-config.json
 </pre>
 
 # #prepare
